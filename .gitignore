@@ -70,3 +70,8 @@ cache/
 .vscode/
 .agents/
 .claude
+
+artifacts/
+cache/
+backend/venv/
+frontend/node_modules/
