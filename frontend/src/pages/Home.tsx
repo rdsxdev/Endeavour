@@ -1,15 +1,6 @@
 import { Link } from "react-router-dom"
-import {
-  ArrowRight,
-  ShieldCheck,
-  Repeat,
-  Flame,
-  FileSearch,
-  Globe2,
-  Layers,
-  Lock,
-} from "lucide-react"
-import { useReveal, useCountUpRef, useCredits } from "../hooks"
+import { ArrowRight, ShieldCheck, Repeat, Flame, FileSearch, Globe as Globe2, Layers, Lock } from "lucide-react"
+import { useReveal, useCountUp, useCredits } from "../hooks"
 import { formatCompact } from "../api"
 import { computeStats } from "../stats"
 import CreditCard from "../components/CreditCard"
@@ -97,13 +88,10 @@ function Metric({
   label: string
   decimals?: number
 }) {
-  const { value: animated, ref } = useCountUpRef(value)
+  const { value: animated } = useCountUp(value)
   return (
     <div className="text-center">
-      <p
-        ref={ref}
-        className="font-mono text-4xl font-bold text-paper sm:text-5xl"
-      >
+      <p className="font-mono text-4xl font-bold text-paper sm:text-5xl">
         {decimals
           ? animated.toFixed(decimals)
           : formatCompact(Math.round(animated))}

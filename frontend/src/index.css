@@ -170,9 +170,58 @@ h4 {
   background: transparent;
 }
 
+/* Fade in animation */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.4s ease-out forwards;
+}
+
+/* Focus ring */
+input:focus,
+select:focus,
+textarea:focus {
+  box-shadow: 0 0 0 3px var(--color-emerald);
+}
+
+/* Smooth transitions for interactive elements */
+button,
+a,
+input,
+select,
+textarea {
+  transition: all 0.2s ease;
+}
+
+/* Hover glow effect for primary buttons */
+button[type="submit"]:hover:not(:disabled) {
+  box-shadow: 0 0 24px -4px var(--color-emerald-bright);
+}
+
+/* Premium card hover states */
+.group:hover .card-image {
+  transform: scale(1.05);
+}
+
+/* Selection highlight */
+::selection {
+  background: var(--color-emerald);
+  color: var(--color-ink);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .reveal,
-  .reveal.is-visible {
+  .reveal.is-visible,
+  .animate-fade-in {
     animation: none;
     opacity: 1;
   }
