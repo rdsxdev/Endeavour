@@ -1,0 +1,49 @@
+{
+  "_format": "hh3-sol-build-info-1",
+  "id": "solc-0_8_28-e90f3898dfb15d26c219232c78cee6f0e0246008",
+  "solcVersion": "0.8.28",
+  "solcLongVersion": "0.8.28+commit.7893614a",
+  "compilerType": "solc",
+  "toolVersions": {
+    "hardhat": "3.7.0"
+  },
+  "userSourceNameMap": {
+    "contracts/CarbonRegistry.sol": "project/contracts/CarbonRegistry.sol"
+  },
+  "input": {
+    "language": "Solidity",
+    "settings": {
+      "evmVersion": "cancun",
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "outputSelection": {
+        "*": {
+          "": [
+            "ast"
+          ],
+          "*": [
+            "abi",
+            "evm.bytecode.linkReferences",
+            "evm.bytecode.object",
+            "evm.bytecode.opcodes",
+            "evm.bytecode.sourceMap",
+            "evm.deployedBytecode.immutableReferences",
+            "evm.deployedBytecode.linkReferences",
+            "evm.deployedBytecode.object",
+            "evm.deployedBytecode.opcodes",
+            "evm.deployedBytecode.sourceMap",
+            "evm.methodIdentifiers"
+          ]
+        }
+      },
+      "remappings": []
+    },
+    "sources": {
+      "project/contracts/CarbonRegistry.sol": {
+        "content": "// SPDX-License-Identifier: MIT\npragma solidity ^0.8.28;\n\ncontract CarbonRegistry {\n\n    struct Credit {\n        uint256 id;\n        string project;\n        string country;\n        uint256 vintageYear;\n        address owner;\n        bool verified;\n        bool retired;\n        uint256 createdAt;\n    }\n\n    uint256 public nextCreditId;\n\n    mapping(uint256 => Credit) public credits;\n\n    event CreditCreated(\n        uint256 indexed id,\n        string project,\n        address indexed owner\n    );\n\n    event CreditRetired(\n        uint256 indexed id\n    );\n\n    event CreditTransferred(\n        uint256 indexed id,\n        address indexed from,\n        address indexed to\n    );\n\n    function createCredit(\n        string memory project,\n        string memory country,\n        uint256 vintageYear\n    ) public {\n\n        require(\n            bytes(project).length > 0,\n            \"Project required\"\n        );\n\n        require(\n            bytes(country).length > 0,\n            \"Country required\"\n        );\n\n        require(\n            vintageYear >= 1900 &&\n            vintageYear <= 2100,\n            \"Invalid vintage year\"\n        );\n\n        credits[nextCreditId] = Credit({\n            id: nextCreditId,\n            project: project,\n            country: country,\n            vintageYear: vintageYear,\n            owner: msg.sender,\n            verified: true,\n            retired: false,\n            createdAt: block.timestamp\n        });\n\n        emit CreditCreated(\n            nextCreditId,\n            project,\n            msg.sender\n        );\n\n        nextCreditId++;\n    }\n\n    function retireCredit(\n        uint256 id\n    ) public {\n\n        require(\n            credits[id].owner == msg.sender,\n            \"Not owner\"\n        );\n\n        require(\n            !credits[id].retired,\n            \"Already retired\"\n        );\n\n        credits[id].retired = true;\n\n        emit CreditRetired(id);\n    }\n\n    function transferCredit(\n        uint256 id,\n        address newOwner\n    ) public {\n\n        require(\n            credits[id].owner == msg.sender,\n            \"Not owner\"\n        );\n\n        require(\n            !credits[id].retired,\n            \"Credit retired\"\n        );\n\n        require(\n            newOwner != address(0),\n            \"Invalid owner\"\n        );\n\n        address oldOwner =\n            credits[id].owner;\n\n        credits[id].owner =\n            newOwner;\n\n        emit CreditTransferred(\n            id,\n            oldOwner,\n            newOwner\n        );\n    }\n\n    function getCredit(\n        uint256 id\n    )\n        public\n        view\n        returns (\n            uint256,\n            string memory,\n            string memory,\n            uint256,\n            address,\n            bool,\n            bool,\n            uint256\n        )\n    {\n        Credit memory c =\n            credits[id];\n\n        return (\n            c.id,\n            c.project,\n            c.country,\n            c.vintageYear,\n            c.owner,\n            c.verified,\n            c.retired,\n            c.createdAt\n        );\n    }\n}\n"
+      }
+    }
+  }
+}

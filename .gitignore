@@ -1,0 +1,72 @@
+# Node modules
+/node_modules
+
+# Compilation output
+/dist
+
+# pnpm deploy output
+/bundle
+
+# Hardhat Build Artifacts
+/artifacts
+
+# Hardhat compilation (v2) support directory
+/cache
+
+# Typechain output
+/types
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Hardhat coverage reports
+/coverage
+
+# Gas snapshot files
+/.gas-snapshot
+
+# Snapshot cheatcodes output
+/snapshots
+
+# Node
+node_modules/
+dist/
+build/
+
+# Python
+venv/
+__pycache__/
+*.pyc
+
+# Environment files
+.env
+.env.local
+.env.*
+
+# Hardhat
+cache/
+artifacts/
+
+# VS Code
+.vscode/
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+
+node_modules/
+venv/
+__pycache__/
+.env
+.env.*
+dist/
+build/
+artifacts/
+cache/
+.vscode/
+.agents/
+.claude
