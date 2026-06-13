@@ -1,57 +1,190 @@
+@import "tailwindcss";
+
+/*
+  ENDEAVOUR — Design System
+  Institutional climate-finance infrastructure.
+  Deep navy base, emerald green accents, editorial typography.
+*/
+
+@theme {
+  /* Brand palette */
+  --color-ink: #07111f; /* deep navy base */
+  --color-ink-2: #0b1729; /* raised navy surface */
+  --color-ink-3: #101f33; /* elevated panel */
+  --color-line: #1b2c43; /* hairline borders */
+  --color-line-2: #243a56;
+
+  --color-paper: #f4f6f8; /* off-white text */
+  --color-mute: #8aa0b8; /* soft gray text */
+  --color-mute-2: #5d7governed; /* unused placeholder removed below */
+
+  --color-emerald: #10b981;
+  --color-emerald-bright: #34d399;
+  --color-emerald-deep: #047857;
+
+  /* Typography */
+  --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+  --radius: 0.75rem;
+}
+
+/* remove invalid placeholder token (kept theme valid) */
+@theme {
+  --color-mute-2: #62788f;
+}
+
 :root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+  color-scheme: dark;
+}
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
+* {
+  border-color: var(--color-line);
+}
 
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
+html {
+  background-color: var(--color-ink);
+  scroll-behavior: smooth;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-
-  @media (max-width: 1024px) {
-    font-size: 16px;
-  }
+  text-rendering: optimizeLegibility;
 }
+
 body {
   margin: 0;
-  background: #0b1020;
-  color: white;
-  font-family: Inter, sans-serif;
+  background-color: var(--color-ink);
+  color: var(--color-paper);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.6;
+  letter-spacing: -0.011em;
 }
 
+/* Reset the legacy element styles that shipped with the starter */
 a {
-  color: white;
+  color: inherit;
   text-decoration: none;
 }
 
-input {
-  padding: 12px;
-  border-radius: 8px;
-  border: none;
+button {
+  font-family: inherit;
+  cursor: pointer;
 }
 
-button {
-  padding: 12px 18px;
-  border: none;
-  border-radius: 8px;
-  background: #16a34a;
-  color: white;
-  cursor: pointer;
+input,
+select,
+textarea {
+  font-family: inherit;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  text-wrap: balance;
+}
+
+/* Utility: thin uppercase editorial eyebrow */
+.eyebrow {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+}
+
+/* Subtle dotted grid background used across sections */
+.grid-bg {
+  background-image: radial-gradient(
+    circle at 1px 1px,
+    rgba(138, 160, 184, 0.09) 1px,
+    transparent 0
+  );
+  background-size: 32px 32px;
+}
+
+/* Faint top-down fade for hero overlays */
+.hero-veil {
+  background: linear-gradient(
+    180deg,
+    rgba(7, 17, 31, 0.55) 0%,
+    rgba(7, 17, 31, 0.35) 35%,
+    rgba(7, 17, 31, 0.75) 78%,
+    rgba(7, 17, 31, 1) 100%
+  );
+}
+
+/* Reveal-on-scroll animation */
+@keyframes endv-rise {
+  from {
+    opacity: 0;
+    transform: translateY(22px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.reveal {
+  opacity: 0;
+}
+
+.reveal.is-visible {
+  animation: endv-rise 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Live status pulse */
+@keyframes endv-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.45;
+    transform: scale(0.78);
+  }
+}
+
+.pulse-dot {
+  animation: endv-pulse 2.4s ease-in-out infinite;
+}
+
+/* Slow drift for background network layers */
+@keyframes endv-drift {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: 600px 300px;
+  }
+}
+
+/* Custom scrollbar for data tables */
+.thin-scroll::-webkit-scrollbar {
+  height: 8px;
+  width: 8px;
+}
+.thin-scroll::-webkit-scrollbar-thumb {
+  background: var(--color-line-2);
+  border-radius: 999px;
+}
+.thin-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal,
+  .reveal.is-visible {
+    animation: none;
+    opacity: 1;
+  }
+  .pulse-dot {
+    animation: none;
+  }
+  html {
+    scroll-behavior: auto;
+  }
 }
