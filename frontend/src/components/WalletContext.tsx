@@ -62,6 +62,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   )
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useWallet(): WalletState {
   const ctx = useContext(WalletContext)
   if (!ctx) throw new Error("useWallet must be used within WalletProvider")

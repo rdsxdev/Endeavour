@@ -17,6 +17,8 @@ import {
   USING_LIVE_BACKEND,
 } from "./api"
 
+const SITE_NAME = "Endeavour"
+
 /* ------------------------------------------------------------------ */
 /* useReveal — intersection-observer fade-in                           */
 /* ------------------------------------------------------------------ */
@@ -55,11 +57,12 @@ export function useCountUp(target: number, duration = 1200) {
   const [value, setValue] = useState(0)
   const ref = useRef<HTMLSpanElement>(null)
   const rafRef = useRef<number | null>(null)
+  const prevRef = useRef(0)
 
   useEffect(() => {
     if (rafRef.current !== null) cancelAnimationFrame(rafRef.current)
 
-    const start = value
+    const start = prevRef.current
     const range = target - start
     const startTime = performance.now()
 
@@ -67,7 +70,9 @@ export function useCountUp(target: number, duration = 1200) {
       const elapsed  = currentTime - startTime
       const progress = Math.min(elapsed / duration, 1)
       const eased    = 1 - Math.pow(1 - progress, 4)
-      setValue(Math.round(start + range * eased))
+      const next = Math.round(start + range * eased)
+      setValue(next)
+      prevRef.current = next
 
       if (progress < 1) {
         rafRef.current = requestAnimationFrame(animate)
@@ -175,4 +180,16 @@ export function useHealth(): UseHealthResult {
   }, [])
 
   return { health, loading, error, live }
+}
+
+/* ------------------------------------------------------------------ */
+/* usePageTitle — set document.title on mount / change                  */
+/* ------------------------------------------------------------------ */
+
+export function usePageTitle(title: string) {
+  useEffect(() => {
+    const prev = document.title
+    document.title = title ? `${title} — ${SITE_NAME}` : SITE_NAME
+    return () => { document.title = prev }
+  }, [title])
 }

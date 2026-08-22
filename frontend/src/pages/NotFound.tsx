@@ -1,7 +1,9 @@
 import { Link } from "react-router-dom"
 import { ArrowLeft, Map } from "lucide-react"
+import { usePageTitle } from "../hooks"
 
 export default function NotFound() {
+  usePageTitle("Not Found")
   return (
     <div className="min-h-[80vh] flex flex-col items-center justify-center px-5 text-center">
       <div className="h-24 w-24 rounded-full bg-ink-2 border border-line flex items-center justify-center text-mute mb-8 shadow-xl">

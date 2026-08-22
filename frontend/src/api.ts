@@ -13,6 +13,7 @@
  */
 
 import axios, { AxiosError } from "axios"
+import { API_URL } from "./env"
 
 /* ------------------------------------------------------------------ */
 /* Types                                                               */
@@ -67,12 +68,8 @@ export class ApiError extends Error {
 /* Axios client + interceptor                                          */
 /* ------------------------------------------------------------------ */
 
-const BASE_URL =
-  (import.meta.env.VITE_API_URL as string | undefined) ??
-  "http://localhost:8000"
-
 export const api = axios.create({
-  baseURL: BASE_URL,
+  baseURL: API_URL,
   timeout: 10_000,
 })
 
@@ -125,7 +122,7 @@ const SEED_CREDITS: Credit[] = [
   { id: 19, project: "Yunnan Afforestation Programme",    country: "China",          vintage_year: 2022, owner: A(20), verified: true,  retired: true,  created_at: 1_702_000_000 },
 ]
 
-let SESSION_CREDITS: Credit[] = []
+const SESSION_CREDITS: Credit[] = []
 
 function allOfflineCredits(): Credit[] {
   return [...SEED_CREDITS, ...SESSION_CREDITS].sort((a, b) => a.id - b.id)
