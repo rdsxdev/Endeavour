@@ -31,10 +31,9 @@ def register_exception_handlers(app: FastAPI) -> None:
     async def app_error_handler(request: Request, exc: AppError) -> JSONResponse:
         logger.warning(
             "app_error",
-            extra={
-                "request_id": getattr(request.state, "request_id", "unknown"),
-                "error_code": str(exc.code),
-            },
+        extra={
+            "error_code": str(exc.code),
+        },
         )
         return JSONResponse(status_code=exc.status_code, content=_payload(request, exc.code, exc.message, exc.details))
 
@@ -66,10 +65,8 @@ def register_exception_handlers(app: FastAPI) -> None:
 
     @app.exception_handler(SQLAlchemyError)
     async def db_handler(request: Request, exc: SQLAlchemyError) -> JSONResponse:
-        logger.exception(
-            "database_error",
-            extra={"request_id": getattr(request.state, "request_id", "unknown")},
-        )
+        logger.warning("...")
+
         return JSONResponse(
             status_code=503,
             content=_payload(request, ErrorCode.DATABASE_UNAVAILABLE, PUBLIC_MESSAGE[ErrorCode.DATABASE_UNAVAILABLE]),
@@ -77,10 +74,7 @@ def register_exception_handlers(app: FastAPI) -> None:
 
     @app.exception_handler(TimeoutError)
     async def timeout_handler(request: Request, exc: TimeoutError) -> JSONResponse:
-        logger.warning(
-            "timeout",
-            extra={"request_id": getattr(request.state, "request_id", "unknown")},
-        )
+        logger.warning("...")
         return JSONResponse(
             status_code=504,
             content=_payload(request, ErrorCode.TIMEOUT, PUBLIC_MESSAGE[ErrorCode.TIMEOUT]),

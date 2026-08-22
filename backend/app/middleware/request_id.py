@@ -20,15 +20,14 @@ class RequestContextMiddleware(BaseHTTPMiddleware):
         except Exception:
             duration_ms = int((time.perf_counter() - started) * 1000)
             logger.exception(
-                "request_failed",
-                extra={
-                    "request_id": request_id,
-                    "method": request.method,
-                    "path": request.url.path,
-                    "status": 500,
-                    "duration_ms": duration_ms,
-                },
-            )
+            "request_failed",
+            extra={
+                "method": request.method,
+                "path": request.url.path,
+                "status": 500,
+                "duration_ms": duration_ms,
+            },
+        )
             raise
         duration_ms = int((time.perf_counter() - started) * 1000)
         response.headers[REQUEST_ID_HEADER] = request_id
