@@ -1,205 +1,448 @@
 import { useState } from "react"
-import { Link } from "react-router-dom"
+import { useNavigate } from "react-router-dom"
 import {
   AlertCircle,
-  ArrowRight,
   CheckCircle2,
-  FileCheck2,
-  ShieldCheck,
-  UploadCloud,
+  ChevronDown,
+  Loader2,
+  MapPin,
+  Calendar,
+  Layers,
+  FileText,
+  Leaf,
+  ArrowRight,
+  Info,
 } from "lucide-react"
-import { createCredit } from "../api"
-import { usePageTitle } from "../hooks"
-import heroRenewable from "../assets/hero-renewable.jpg"
+import { createCredit, type TxResponse } from "../api"
+import PageHeader from "../components/PageHeader"
 
-type Status = "idle" | "submitting" | "success" | "error"
+const COUNTRIES = [
+  "Indonesia",
+  "Brazil",
+  "India",
+  "Kenya",
+  "Peru",
+  "DR Congo",
+  "Malaysia",
+  "Pakistan",
+  "United States",
+  "Canada",
+  "United Kingdom",
+  "China",
+  "Colombia",
+  "Mexico",
+  "Vietnam",
+  "Thailand",
+  "Philippines",
+  "Tanzania",
+  "Ethiopia",
+  "Nigeria",
+].sort()
+
+const CATEGORIES = [
+  { value: "Forest Conservation", label: "Forest Conservation (REDD+)" },
+  { value: "Reforestation", label: "Reforestation / Afforestation" },
+  { value: "Renewable Energy", label: "Renewable Energy" },
+  { value: "Blue Carbon", label: "Blue Carbon (Mangrove/Coastal)" },
+  { value: "Peatland", label: "Peatland Restoration" },
+  { value: "Soil Carbon", label: "Soil Carbon Sequestration" },
+  { value: "Improved Forest Management", label: "Improved Forest Management" },
+]
+
+const VINTAGE_YEARS = Array.from({ length: 10 }, (_, i) => 2025 - i)
+
+type FormData = {
+  projectName: string
+  country: string
+  category: string
+  vintageYear: number
+  carbonVolume: string
+  description: string
+}
+
+type FormErrors = Partial<Record<keyof FormData, string>>
+
+const initialState: FormData = {
+  projectName: "",
+  country: "",
+  category: "",
+  vintageYear: 0,
+  carbonVolume: "",
+  description: "",
+}
+
+function validateForm(data: FormData): FormErrors {
+  const errors: FormErrors = {}
+
+  if (!data.projectName.trim()) {
+    errors.projectName = "Project name is required"
+  } else if (data.projectName.trim().length < 5) {
+    errors.projectName = "Project name must be at least 5 characters"
+  } else if (data.projectName.trim().length > 120) {
+    errors.projectName = "Project name must be 120 characters or less"
+  }
+
+  if (!data.country) {
+    errors.country = "Please select a country"
+  }
+
+  if (!data.category) {
+    errors.category = "Please select a project category"
+  }
+
+  if (!data.vintageYear) {
+    errors.vintageYear = "Please select a vintage year"
+  }
+
+  const volume = parseFloat(data.carbonVolume)
+  if (!data.carbonVolume.trim()) {
+    errors.carbonVolume = "Carbon volume is required"
+  } else if (isNaN(volume) || volume <= 0) {
+    errors.carbonVolume = "Enter a valid positive number"
+  } else if (volume > 10_000_000) {
+    errors.carbonVolume = "Volume cannot exceed 10,000,000 tCO₂e"
+  }
+
+  if (data.description.trim() && data.description.trim().length < 20) {
+    errors.description = "Description must be at least 20 characters if provided"
+  } else if (data.description.trim().length > 1000) {
+    errors.description = "Description must be 1000 characters or less"
+  }
+
+  return errors
+}
 
 export default function CreateCredit() {
-  usePageTitle("Create Credit")
-  const [status, setStatus] = useState<Status>("idle")
-  const [txHash, setTxHash] = useState("")
-  const [formData, setFormData] = useState({
-    project: "",
-    country: "",
-    vintage_year: new Date().getFullYear().toString(),
-    methodology: "Forest Conservation",
-    evidence: "",
-  })
+  const navigate = useNavigate()
+  const [formData, setFormData] = useState<FormData>(initialState)
+  const [errors, setErrors] = useState<FormErrors>({})
+  const [submitting, setSubmitting] = useState(false)
+  const [result, setResult] = useState<TxResponse | null>(null)
+  const [showSuccess, setShowSuccess] = useState(false)
+
+  function updateField<K extends keyof FormData>(field: K, value: FormData[K]) {
+    setFormData((prev) => ({ ...prev, [field]: value }))
+    if (errors[field]) {
+      setErrors((prev) => ({ ...prev, [field]: undefined }))
+    }
+    if (showSuccess) setShowSuccess(false)
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    setStatus("submitting")
+    const validationErrors = validateForm(formData)
+    setErrors(validationErrors)
+
+    if (Object.keys(validationErrors).length > 0) return
+
+    setSubmitting(true)
     try {
-      const vintage = Number(formData.vintage_year)
-      if (!formData.project.trim() || !formData.country.trim() || !vintage) {
-        throw new Error("Invalid form")
-      }
-      const res = await createCredit({
-        project: formData.project.trim(),
-        country: formData.country.trim(),
-        vintage_year: vintage,
+      const response = await createCredit({
+        project: formData.projectName.trim(),
+        country: formData.country,
+        vintage_year: formData.vintageYear,
       })
-      setTxHash(res.tx_hash)
-      setStatus("success")
-    } catch {
-      setStatus("error")
+      setResult(response)
+      setShowSuccess(true)
+      setTimeout(() => {
+        navigate("/registry")
+      }, 2500)
+    } catch (err) {
+      setErrors({ projectName: "Failed to submit. Please try again." })
+    } finally {
+      setSubmitting(false)
     }
   }
 
-  function handleChange(
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>,
-  ) {
-    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }))
-    if (status === "error") setStatus("idle")
-  }
-
-  if (status === "success") {
-    return (
-      <div className="flex min-h-[80vh] flex-col items-center justify-center bg-ink px-5 text-center">
-        <div className="flex h-20 w-20 items-center justify-center rounded-full bg-emerald/10 text-emerald-deep">
-          <CheckCircle2 className="h-10 w-10" />
-        </div>
-        <h1 className="mt-6 text-4xl font-bold text-paper">Issuance complete</h1>
-        <p className="mt-3 max-w-xl text-mute">
-          The credit was written through the Endeavour API and is now available
-          in the registry data source.
-        </p>
-        <p className="mt-5 max-w-xl truncate rounded-lg border border-line bg-ink-2 px-4 py-3 font-mono text-xs text-mute">
-          {txHash}
-        </p>
-        <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-          <button
-            onClick={() => setStatus("idle")}
-            className="rounded-lg border border-line bg-ink px-6 py-3 font-semibold text-paper hover:bg-ink-2"
-          >
-            Issue Another
-          </button>
-          <Link
-            to="/registry"
-            className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald px-6 py-3 font-semibold text-white hover:bg-emerald-deep"
-          >
-            View Registry <ArrowRight className="h-4 w-4" />
-          </Link>
-        </div>
-      </div>
-    )
-  }
-
   return (
-    <div className="bg-ink pb-24">
-      <section className="relative min-h-[430px] overflow-hidden">
-        <img src={heroRenewable} alt="Renewable energy infrastructure" className="absolute inset-0 h-full w-full object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/35 to-transparent" />
-        <div className="relative mx-auto flex min-h-[430px] max-w-7xl items-end px-5 pb-14 pt-28 lg:px-8">
-          <div className="max-w-3xl text-white">
-            <p className="eyebrow text-emerald-bright">Enterprise Issuance</p>
-            <h1 className="mt-4 text-5xl font-bold leading-tight sm:text-6xl">
-              Create Carbon Credit
-            </h1>
-            <p className="mt-5 max-w-2xl text-lg text-white/82">
-              Register a project, lock its vintage metadata and submit the
-              issuance request to Endeavour's blockchain-backed registry.
-            </p>
-          </div>
-        </div>
-      </section>
+    <>
+      <PageHeader
+        eyebrow="Credit Issuance"
+        title="Create Carbon Credit"
+        intro="Issue a new carbon credit to the on-chain registry. All fields are recorded permanently on the blockchain and cannot be modified after submission."
+      />
 
-      <div className="mx-auto mt-[-44px] grid max-w-7xl gap-8 px-5 lg:grid-cols-[0.72fr_1fr] lg:px-8">
-        <aside className="relative z-10 rounded-3xl border border-line bg-ink p-7 shadow-2xl shadow-emerald-950/10">
-          <p className="eyebrow text-emerald-deep">Workflow</p>
-          {[
-            ["Project registration", "Capture project, country and vintage metadata."],
-            ["Verification package", "Associate evidence and methodology context."],
-            ["Blockchain issuance", "Write the credit record through the API."],
-          ].map(([title, body], i) => (
-            <div key={title} className="mt-7 flex gap-4">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald/10 font-mono text-sm text-emerald-deep">
-                0{i + 1}
-              </span>
-              <div>
-                <h3 className="font-semibold text-paper">{title}</h3>
-                <p className="mt-1 text-sm text-mute">{body}</p>
+      <div className="mx-auto max-w-3xl px-5 py-12 lg:px-8">
+        {/* Success toast */}
+        {showSuccess && (
+          <div className="animate-fade-in mb-8 flex items-start gap-4 rounded-xl border border-emerald/30 bg-emerald/10 p-5 text-emerald-bright">
+            <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0" />
+            <div className="flex-1">
+              <p className="font-semibold">Credit issued successfully</p>
+              <p className="mt-1 text-sm opacity-80">
+                Transaction hash:{" "}
+                <span className="font-mono text-xs">
+                  {result?.tx_hash ?? "—"}
+                </span>
+              </p>
+              <p className="mt-2 text-sm opacity-80">
+                Redirecting to registry…
+              </p>
+            </div>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Project Name */}
+          <div className="space-y-2">
+            <label
+              htmlFor="projectName"
+              className="flex items-center gap-2 text-sm font-medium text-paper"
+            >
+              <FileText className="h-4 w-4 text-mute" />
+              Project Name
+            </label>
+            <input
+              id="projectName"
+              type="text"
+              value={formData.projectName}
+              onChange={(e) => updateField("projectName", e.target.value)}
+              placeholder="e.g. Rimba Raya Biodiversity Reserve"
+              className={`w-full rounded-xl border bg-ink-2 px-4 py-3.5 text-paper outline-none transition-all placeholder:text-mute/60 focus:ring-2 ${
+                errors.projectName
+                  ? "border-red-500/50 focus:border-red-500 focus:ring-red-500/20"
+                  : "border-line focus:border-emerald focus:ring-emerald/20"
+              }`}
+              disabled={submitting}
+            />
+            {errors.projectName && (
+              <p className="flex items-center gap-1.5 text-sm text-red-400">
+                <AlertCircle className="h-4 w-4" />
+                {errors.projectName}
+              </p>
+            )}
+          </div>
+
+          {/* Country + Category row */}
+          <div className="grid gap-6 md:grid-cols-2">
+            {/* Country */}
+            <div className="space-y-2">
+              <label
+                htmlFor="country"
+                className="flex items-center gap-2 text-sm font-medium text-paper"
+              >
+                <MapPin className="h-4 w-4 text-mute" />
+                Country
+              </label>
+              <div className="relative">
+                <select
+                  id="country"
+                  value={formData.country}
+                  onChange={(e) => updateField("country", e.target.value)}
+                  className={`w-full appearance-none rounded-xl border bg-ink-2 px-4 py-3.5 pr-10 text-paper outline-none transition-all focus:ring-2 ${
+                    errors.country
+                      ? "border-red-500/50 focus:border-red-500 focus:ring-red-500/20"
+                      : formData.country
+                        ? "border-emerald focus:border-emerald focus:ring-ring!-emerald focus:ring-emerald/20"
+                        : "border-line focus:border-emerald focus:ring-emerald/20"
+                  }`}
+                  disabled={submitting}
+                >
+                  <option value="" className="bg-ink-2 text-mute">
+                    Select country
+                  </option>
+                  {COUNTRIES.map((c) => (
+                    <option key={c} value={c} className="bg-ink-2">
+                      {c}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-mute" />
               </div>
+              {errors.country && (
+                <p className="flex items-center gap-1.5 text-sm text-red-400">
+                  <AlertCircle className="h-4 w-4" />
+                  {errors.country}
+                </p>
+              )}
             </div>
-          ))}
-        </aside>
 
-        <form onSubmit={handleSubmit} className="relative z-10 rounded-3xl border border-line bg-ink p-6 shadow-2xl shadow-emerald-950/10 sm:p-9">
-          {status === "error" && (
-            <div className="mb-6 flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-red-700">
-              <AlertCircle className="h-5 w-5" />
-              <p className="text-sm">Please provide a project, country and valid vintage year.</p>
+            {/* Category */}
+            <div className="space-y-2">
+              <label
+                htmlFor="category"
+                className="flex items-center gap-2 text-sm font-medium text-paper"
+              >
+                <Leaf className="h-4 w-4 text-mute" />
+                Project Category
+              </label>
+              <div className="relative">
+                <select
+                  id="category"
+                  value={formData.category}
+                  onChange={(e) => updateField("category", e.target.value)}
+                  className={`w-full appearance-none rounded-xl border bg-ink-2 px-4 py-3.5 pr-10 text-paper outline-none transition-all focus:ring-2 ${
+                    errors.category
+                      ? "border-red-500/50 focus:border-red-500 focus:ring-red-500/20"
+                      : formData.category
+                        ? "border-emerald focus:border-emerald focus:ring-emerald/20"
+                        : "border-line focus:border-emerald focus:ring-emerald/20"
+                  }`}
+                  disabled={submitting}
+                >
+                  <option value="" className="bg-ink-2 text-mute">
+                    Select category
+                  </option>
+                  {CATEGORIES.map((c) => (
+                    <option key={c.value} value={c.value} className="bg-ink-2">
+                      {c.label}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-mute" />
+              </div>
+              {errors.category && (
+                <p className="flex items-center gap-1.5 text-sm text-red-400">
+                  <AlertCircle className="h-4 w-4" />
+                  {errors.category}
+                </p>
+              )}
             </div>
-          )}
-
-          <div className="grid gap-6 sm:grid-cols-2">
-            <Field label="Project Name" className="sm:col-span-2">
-              <input name="project" required value={formData.project} onChange={handleChange} placeholder="e.g. Katingan Peatland Restoration" className="input" />
-            </Field>
-            <Field label="Country of Origin">
-              <input name="country" required value={formData.country} onChange={handleChange} placeholder="e.g. Indonesia" className="input" />
-            </Field>
-            <Field label="Vintage Year">
-              <input name="vintage_year" type="number" min="1990" max="2100" required value={formData.vintage_year} onChange={handleChange} className="input font-mono" />
-            </Field>
-            <Field label="Methodology">
-              <select name="methodology" value={formData.methodology} onChange={handleChange} className="input">
-                <option>Forest Conservation</option>
-                <option>Reforestation</option>
-                <option>Renewable Energy</option>
-                <option>Blue Carbon</option>
-                <option>Peatland</option>
-              </select>
-            </Field>
-            <Field label="Verification Evidence">
-              <input name="evidence" value={formData.evidence} onChange={handleChange} placeholder="Audit package URI or reference" className="input" />
-            </Field>
-            <Field label="Project Notes" className="sm:col-span-2">
-              <textarea name="notes" rows={4} placeholder="Summarize monitoring boundaries, verifier notes and issuance assumptions." className="input resize-none" />
-            </Field>
           </div>
 
-          <div className="mt-8 border-t border-line pt-6">
+          {/* Vintage + Volume row */}
+          <div className="grid gap-6 md:grid-cols-2">
+            {/* Vintage Year */}
+            <div className="space-y-2">
+              <label
+                htmlFor="vintageYear"
+                className="flex items-center gap-2 text-sm font-medium text-paper"
+              >
+                <Calendar className="h-4 w-4 text-mute" />
+                Vintage Year
+              </label>
+              <div className="relative">
+                <select
+                  id="vintageYear"
+                  value={formData.vintageYear || ""}
+                  onChange={(e) =>
+                    updateField("vintageYear", parseInt(e.target.value) || 0)
+                  }
+                  className={`w-full appearance-none rounded-xl border bg-ink-2 px-4 py-3.5 pr-10 text-paper outline-none transition-all focus:ring-2 ${
+                    errors.vintageYear
+                      ? "border-red-500/50 focus:border-red-500 focus:ring-red-500/20"
+                      : formData.vintageYear
+                        ? "border-emerald focus:border-emerald focus:ring-emerald/20"
+                        : "border-line focus:border-emerald focus:ring-emerald/20"
+                  }`}
+                  disabled={submitting}
+                >
+                  <option value="" className="bg-ink-2 text-mute">
+                    Select year
+                  </option>
+                  {VINTAGE_YEARS.map((y) => (
+                    <option key={y} value={y} className="bg-ink-2">
+                      {y}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-mute" />
+              </div>
+              {errors.vintageYear && (
+                <p className="flex items-center gap-1.5 text-sm text-red-400">
+                  <AlertCircle className="h-4 w-4" />
+                  {errors.vintageYear}
+                </p>
+              )}
+            </div>
+
+            {/* Carbon Volume */}
+            <div className="space-y-2">
+              <label
+                htmlFor="carbonVolume"
+                className="flex items-center gap-2 text-sm font-medium text-paper"
+              >
+                <Layers className="h-4 w-4 text-mute" />
+                Carbon Volume (tCO₂e)
+              </label>
+              <input
+                id="carbonVolume"
+                type="text"
+                inputMode="numeric"
+                value={formData.carbonVolume}
+                onChange={(e) => updateField("carbonVolume", e.target.value)}
+                placeholder="e.g. 50000"
+                className={`w-full rounded-xl border bg-ink-2 px-4 py-3.5 font-mono text-paper outline-none transition-all placeholder:text-mute/60 focus:ring-2 ${
+                  errors.carbonVolume
+                    ? "border-red-500/50 focus:border-red-500 focus:ring-red-500/20"
+                    : formData.carbonVolume
+                      ? "border-emerald focus:border-emerald focus:ring-emerald/20"
+                      : "border-line focus:border-emerald focus:ring-emerald/20"
+                }`}
+                disabled={submitting}
+              />
+              {errors.carbonVolume && (
+                <p className="flex items-center gap-1.5 text-sm text-red-400">
+                  <AlertCircle className="h-4 w-4" />
+                  {errors.carbonVolume}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Description */}
+          <div className="space-y-2">
+            <label
+              htmlFor="description"
+              className="flex items-center gap-2 text-sm font-medium text-paper"
+            >
+              <Info className="h-4 w-4 text-mute" />
+              Description{" "}
+              <span className="text-mute">(optional)</span>
+            </label>
+            <textarea
+              id="description"
+              rows={4}
+              value={formData.description}
+              onChange={(e) => updateField("description", e.target.value)}
+              placeholder="Briefly describe the project, its methodology, and verification status."
+              className={`w-full resize-none rounded-xl border bg-ink-2 px-4 py-3.5 text-paper outline-none transition-all placeholder:text-mute/60 focus:ring-2 ${
+                errors.description
+                  ? "border-red-500/50 focus:border-red-500 focus:ring-red-500/20"
+                  : "border-line focus:border-emerald focus:ring-emerald/20"
+              }`}
+              disabled={submitting}
+            />
+            <div className="flex items-center justify-between">
+              {errors.description ? (
+                <p className="flex items-center gap-1.5 text-sm text-red-400">
+                  <AlertCircle className="h-4 w-4" />
+                  {errors.description}
+                </p>
+              ) : (
+                <span />
+              )}
+              <span className="text-xs text-mute">
+                {formData.description.length}/1000
+              </span>
+            </div>
+          </div>
+
+          {/* Submit */}
+          <div className="flex items-center justify-between gap-4 border-t border-line pt-8">
+            <p className="text-sm text-mute">
+              All fields are recorded on-chain permanently.
+            </p>
             <button
               type="submit"
-              disabled={status === "submitting"}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-emerald px-8 py-3.5 font-semibold text-white transition hover:bg-emerald-deep disabled:opacity-60 sm:w-auto"
+              disabled={submitting}
+              className="inline-flex items-center gap-2 rounded-xl bg-emerald px-8 py-3.5 font-semibold text-ink transition-all hover:bg-emerald-bright disabled:opacity-60"
             >
-              {status === "submitting" ? (
-                "Writing to registry..."
+              {submitting ? (
+                <>
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                  Issuing credit…
+                </>
               ) : (
                 <>
-                  <UploadCloud className="h-5 w-5" /> Issue Credit
+                  Issue Credit
+                  <ArrowRight className="h-5 w-5" />
                 </>
               )}
             </button>
-            <p className="mt-4 flex items-center gap-2 text-xs text-mute">
-              <ShieldCheck className="h-4 w-4 text-emerald-deep" />
-              Issuance preserves the existing backend contract: project, country and vintage year.
-            </p>
           </div>
         </form>
       </div>
-    </div>
-  )
-}
-
-function Field({
-  label,
-  children,
-  className = "",
-}: {
-  label: string
-  children: React.ReactNode
-  className?: string
-}) {
-  return (
-    <label className={`space-y-2 ${className}`}>
-      <span className="flex items-center gap-2 text-sm font-semibold text-paper">
-        <FileCheck2 className="h-4 w-4 text-emerald-deep" />
-        {label}
-      </span>
-      {children}
-    </label>
+    </>
   )
 }

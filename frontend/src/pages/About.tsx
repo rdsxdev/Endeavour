@@ -1,121 +1,237 @@
 import { Link } from "react-router-dom"
-import { ArrowRight, Globe2, ShieldCheck, Cpu, CheckCircle2 } from "lucide-react"
-import { usePageTitle } from "../hooks"
+import { ShieldCheck, Globe as Globe2, Lock, FileSearch, Leaf, ArrowRight, Building2, Landmark, Scale } from "lucide-react"
+import { useReveal } from "../hooks"
+import PageHeader from "../components/PageHeader"
+import heroForest from "../assets/hero-forest.jpg"
+import satellite from "../assets/satellite.jpg"
 
-// Swapped to a much darker, moody, institutional-grade forest image
-const HIGH_RES_ABOUT = "https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?q=80&w=2600&auto=format&fit=crop"
+/* ------------------------------------------------------------------ */
+/* The Problem                                                         */
+/* ------------------------------------------------------------------ */
+
+function TheProblem() {
+  const ref = useReveal<HTMLDivElement>()
+  return (
+    <section ref={ref} className="reveal mx-auto max-w-7xl px-5 py-20 lg:px-8">
+      <div className="grid gap-12 lg:grid-cols-2 lg:items-center">
+        <div className="max-w-xl">
+          <p className="eyebrow text-emerald-bright">The Trust Gap</p>
+          <h2 className="mt-3 text-3xl font-bold text-paper sm:text-4xl">
+            Carbon markets run on promises, not proof.
+          </h2>
+          <p className="mt-5 text-lg leading-relaxed text-mute">
+            The voluntary carbon market has grown to over $2 billion, yet
+            fundamental infrastructure gaps undermine its credibility:
+          </p>
+          <ul className="mt-6 flex flex-col gap-3 text-paper/90">
+            {[
+              "Credits can be double-counted across registries that don't communicate",
+              "Verification records are buried in PDFs that buyers cannot independently audit",
+              "Ownership transfers take weeks and require intermediaries",
+              "Retirement claims cannot be verified after the fact",
+            ].map((p) => (
+              <li key={p} className="flex items-start gap-3">
+                <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-red-400" />
+                {p}
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div className="relative overflow-hidden rounded-2xl">
+          <img
+            src={satellite}
+            alt="Satellite view of Earth"
+            className="h-full w-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-ink/80 to-transparent" />
+          <div className="absolute bottom-6 left-6 max-w-xs">
+            <p className="text-sm text-paper/80">
+              Remote sensing data could validate every credit — if the
+              infrastructure existed.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+/* ------------------------------------------------------------------ */
+/* Our Approach                                                        */
+/* ------------------------------------------------------------------ */
+
+function OurApproach() {
+  const ref = useReveal<HTMLDivElement>()
+  const points = [
+    {
+      icon: Lock,
+      title: "Immutable provenance",
+      body: "Every credit is anchored to the block that created it. The transaction hash is a permanent, auditable record that cannot be rewritten or deleted.",
+    },
+    {
+      icon: FileSearch,
+      title: "Public verification",
+      body: "Anyone can verify a credit's issuance, ownership history, and retirement status without relying on a gatekeeper or intermediary.",
+    },
+    {
+      icon: Globe2,
+      title: "Instant settlement",
+      body: "Transfer credits between parties in seconds, not weeks. No clearing houses, no reconciliation, no counterparty risk.",
+    },
+    {
+      icon: ShieldCheck,
+      title: "Preventing double-counting",
+      body: "A credit can only exist in one place at a time. Once retired, it cannot be revived, transferred, or counted again.",
+    },
+  ]
+
+  return (
+    <section className="border-t border-line bg-ink-2">
+      <div ref={ref} className="reveal mx-auto max-w-7xl px-5 py-20 lg:px-8">
+        <div className="max-w-2xl">
+          <p className="eyebrow text-emerald-bright">How Endeavour Works</p>
+          <h2 className="mt-3 text-3xl font-bold text-paper sm:text-4xl">
+            A single source of truth for every credit.
+          </h2>
+          <p className="mt-4 text-lg leading-relaxed text-mute">
+            Endeavour replaces fragmented trust with cryptographic proof. When a
+            credit is issued, its metadata is written to the blockchain — project
+            name, country, vintage year, and the address that created it.
+          </p>
+        </div>
+
+        <div className="mt-12 grid gap-6 md:grid-cols-2">
+          {points.map((p) => (
+            <div
+              key={p.title}
+              className="flex gap-5 rounded-2xl border border-line bg-ink p-6"
+            >
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-emerald/10 text-emerald-bright">
+                <p.icon className="h-5 w-5" />
+              </span>
+              <div>
+                <h3 className="text-lg font-semibold text-paper">{p.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-mute">
+                  {p.body}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+/* ------------------------------------------------------------------ */
+/* For Whom                                                            */
+/* ------------------------------------------------------------------ */
+
+function ForWhom() {
+  const ref = useReveal<HTMLDivElement>()
+  const audiences = [
+    {
+      icon: Building2,
+      title: "Project Developers",
+      body: "Issue credits directly to the registry with full provenance. No intermediaries, no paperwork, no waiting weeks for your listing to appear.",
+    },
+    {
+      icon: Landmark,
+      title: "Corporate Buyers",
+      body: "Acquire credits with full visibility into their origin. Audit ownership history before you buy, and prove retirement to your stakeholders after.",
+    },
+    {
+      icon: Scale,
+      title: "Regulators & Auditors",
+      body: "Query the full history of any credit programmatically. No black-box databases, no trust required — just raw, verifiable ledger data.",
+    },
+  ]
+
+  return (
+    <section ref={ref} className="reveal mx-auto max-w-7xl px-5 py-20 lg:px-8">
+      <div className="max-w-2xl">
+        <p className="eyebrow text-emerald-bright">Built For</p>
+        <h2 className="mt-3 text-3xl font-bold text-paper sm:text-4xl">
+          The institutions that hold the line on climate integrity.
+        </h2>
+      </div>
+
+      <div className="mt-12 grid gap-6 md:grid-cols-3">
+        {audiences.map((a) => (
+          <div key={a.title} className="rounded-2xl border border-line p-6">
+            <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald/10 text-emerald-bright">
+              <a.icon className="h-5 w-5" />
+            </span>
+            <h3 className="mt-5 text-lg font-semibold text-paper">
+              {a.title}
+            </h3>
+            <p className="mt-2 text-sm leading-relaxed text-mute">{a.body}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+/* ------------------------------------------------------------------ */
+/* Closing CTA                                                         */
+/* ------------------------------------------------------------------ */
+
+function ClosingCTA() {
+  const ref = useReveal<HTMLDivElement>()
+  return (
+    <section className="relative overflow-hidden border-t border-line">
+      <img
+        src={heroForest}
+        alt=""
+        aria-hidden="true"
+        className="absolute inset-0 h-full w-full object-cover"
+      />
+      <div className="absolute inset-0 bg-ink/90" />
+      <div
+        ref={ref}
+        className="reveal relative mx-auto max-w-3xl px-5 py-24 text-center lg:px-8"
+      >
+        <Leaf className="mx-auto h-10 w-10 text-emerald-bright" />
+        <h2 className="mt-6 text-balance text-4xl font-bold text-paper sm:text-5xl">
+          Bring proof to your carbon strategy.
+        </h2>
+        <p className="mx-auto mt-5 max-w-xl text-lg leading-relaxed text-paper/80">
+          Explore the live registry, issue your first credit, or audit the
+          market in real time. Everything is on-chain and independently
+          verifiable.
+        </p>
+        <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+          <Link
+            to="/registry"
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald px-7 py-3.5 font-semibold text-ink transition-colors hover:bg-emerald-bright"
+          >
+            Explore Registry <ArrowRight className="h-4 w-4" />
+          </Link>
+          <Link
+            to="/create"
+            className="inline-flex items-center justify-center gap-2 rounded-lg border border-line-2 bg-ink/40 px-7 py-3.5 font-semibold text-paper backdrop-blur transition-colors hover:bg-ink/70"
+          >
+            Issue a Credit
+          </Link>
+        </div>
+      </div>
+    </section>
+  )
+}
 
 export default function About() {
-  usePageTitle("About")
   return (
-    <div className="pb-24 bg-ink">
-      {/* Premium Dark Image Header */}
-      <div className="relative h-[450px] w-full overflow-hidden">
-        <img
-          src={HIGH_RES_ABOUT}
-          alt="Dark forest canopy"
-          className="absolute inset-0 h-full w-full object-cover"
-        />
-        {/* Much stronger, darker gradient to ensure text pops and matches the deep navy theme */}
-        <div className="absolute inset-0 bg-gradient-to-b from-ink/95 via-ink/80 to-ink" />
-        <div className="absolute inset-0 bg-emerald-900/10 mix-blend-overlay" />
-        
-        <div className="absolute bottom-16 left-0 w-full z-10">
-          <div className="mx-auto max-w-7xl px-5 lg:px-8">
-            <div className="inline-flex items-center gap-2 rounded-full border border-emerald/20 bg-emerald/10 px-3 py-1.5 text-xs font-mono font-medium text-emerald-bright mb-6 shadow-[0_0_15px_rgba(16,185,129,0.15)]">
-              The Endeavour Protocol
-            </div>
-            <h1 className="text-4xl md:text-6xl font-bold text-white max-w-3xl leading-[1.1]">
-              Institutional climate <br/>
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400">infrastructure.</span>
-            </h1>
-            <p className="mt-6 text-xl text-gray-300 max-w-2xl leading-relaxed">
-              We built Endeavour to solve the voluntary carbon market's biggest problems: opacity, double-counting, and slow settlement speeds.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <div className="mx-auto max-w-7xl px-5 py-16 lg:px-8 relative z-10">
-        
-        {/* Core Pillars */}
-        <div className="grid gap-8 lg:grid-cols-3">
-          <div className="group bg-ink-2 border border-line rounded-2xl p-8 hover:-translate-y-1 hover:border-emerald-500/30 hover:shadow-[0_0_30px_rgba(16,185,129,0.05)] transition-all duration-300">
-            <div className="h-12 w-12 rounded-xl bg-emerald/10 flex items-center justify-center text-emerald-bright mb-6 group-hover:scale-110 transition-transform">
-              <ShieldCheck className="h-6 w-6" />
-            </div>
-            <h3 className="text-xl font-semibold text-paper mb-3">Immutable Truth</h3>
-            <p className="text-mute leading-relaxed">
-              Every carbon tonne registered on Endeavour is cryptographically verified. Provenance, vintage, and ownership are public, preventing double-spending and fraud.
-            </p>
-          </div>
-
-          <div className="group bg-ink-2 border border-line rounded-2xl p-8 hover:-translate-y-1 hover:border-emerald-500/30 hover:shadow-[0_0_30px_rgba(16,185,129,0.05)] transition-all duration-300">
-            <div className="h-12 w-12 rounded-xl bg-emerald/10 flex items-center justify-center text-emerald-bright mb-6 group-hover:scale-110 transition-transform">
-              <Cpu className="h-6 w-6" />
-            </div>
-            <h3 className="text-xl font-semibold text-paper mb-3">On-Chain Automation</h3>
-            <p className="text-mute leading-relaxed">
-              Smart contracts handle issuance, transfers, and retirements instantly. We replace weeks of manual PDF reviews with milliseconds of code execution.
-            </p>
-          </div>
-
-          <div className="group bg-ink-2 border border-line rounded-2xl p-8 hover:-translate-y-1 hover:border-emerald-500/30 hover:shadow-[0_0_30px_rgba(16,185,129,0.05)] transition-all duration-300">
-            <div className="h-12 w-12 rounded-xl bg-emerald/10 flex items-center justify-center text-emerald-bright mb-6 group-hover:scale-110 transition-transform">
-              <Globe2 className="h-6 w-6" />
-            </div>
-            <h3 className="text-xl font-semibold text-paper mb-3">Global Settlement</h3>
-            <p className="text-mute leading-relaxed">
-              A borderless layer for climate finance. Corporate buyers and project developers can transact directly without rent-seeking intermediaries.
-            </p>
-          </div>
-        </div>
-
-        {/* Institutional Standards Section */}
-        <div className="mt-24 border-t border-line pt-20">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-paper">Built for Institutional Standards</h2>
-            <p className="text-mute mt-3 max-w-2xl mx-auto">Operating at the intersection of climate science and cryptographic security.</p>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
-            <div className="p-8 bg-ink border border-line rounded-2xl flex flex-col items-center hover:bg-ink-2 transition-colors">
-              <CheckCircle2 className="h-8 w-8 text-emerald-bright mb-4" />
-              <p className="font-semibold text-paper">Verra Aligned</p>
-              <p className="text-xs text-mute mt-2">Compatible methodologies</p>
-            </div>
-            <div className="p-8 bg-ink border border-line rounded-2xl flex flex-col items-center hover:bg-ink-2 transition-colors">
-               <CheckCircle2 className="h-8 w-8 text-emerald-bright mb-4" />
-              <p className="font-semibold text-paper">Gold Standard</p>
-              <p className="text-xs text-mute mt-2">Verification mapping</p>
-            </div>
-            <div className="p-8 bg-ink border border-line rounded-2xl flex flex-col items-center hover:bg-ink-2 transition-colors">
-               <CheckCircle2 className="h-8 w-8 text-emerald-bright mb-4" />
-              <p className="font-semibold text-paper">ICVCM Core</p>
-              <p className="text-xs text-mute mt-2">Integrity principles</p>
-            </div>
-            <div className="p-8 bg-ink border border-line rounded-2xl flex flex-col items-center hover:bg-ink-2 transition-colors">
-               <CheckCircle2 className="h-8 w-8 text-emerald-bright mb-4" />
-              <p className="font-semibold text-paper">ISO 14064-2</p>
-              <p className="text-xs text-mute mt-2">Quantification compliant</p>
-            </div>
-          </div>
-        </div>
-
-        {/* CTA */}
-        <div className="mt-24 border border-line bg-gradient-to-br from-ink-2 to-ink rounded-3xl p-10 sm:p-16 text-center max-w-4xl mx-auto shadow-[0_20px_50px_rgba(0,0,0,0.5)] relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/10 rounded-full blur-[100px]" />
-          <div className="absolute bottom-0 left-0 w-64 h-64 bg-blue-500/5 rounded-full blur-[80px]" />
-          <h2 className="text-3xl font-bold text-paper mb-4 relative z-10">Ready to shape the future of climate finance?</h2>
-          <p className="text-lg text-mute mb-8 max-w-2xl mx-auto relative z-10">
-            Whether you're an institutional buyer looking for premium verified credits, or a developer tokenizing environmental impact, Endeavour is your platform.
-          </p>
-          <div className="flex flex-col sm:flex-row justify-center gap-4 relative z-10">
-            <Link to="/registry" className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-500 px-8 py-4 font-semibold text-ink hover:bg-emerald-400 transition-all hover:-translate-y-0.5 shadow-[0_0_20px_rgba(16,185,129,0.3)]">
-              Explore the Registry <ArrowRight className="h-4 w-4" />
-            </Link>
-          </div>
-        </div>
-      </div>
-    </div>
+    <>
+      <PageHeader
+        eyebrow="About Endeavour"
+        title="On-Chain Infrastructure for Carbon Markets"
+        intro="Endeavour is a blockchain-backed registry that replaces fragmented trust with cryptographic proof — enabling project developers, corporate buyers, and regulators to verify every credit from issuance to retirement."
+      />
+      <TheProblem />
+      <OurApproach />
+      <ForWhom />
+      <ClosingCTA />
+    </>
   )
 }

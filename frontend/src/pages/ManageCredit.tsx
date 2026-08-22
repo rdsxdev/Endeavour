@@ -1,126 +1,270 @@
 import { useState } from "react"
 import { Link } from "react-router-dom"
-import { Flame, Send, History, ArrowUpRight, ShieldCheck, Wallet } from "lucide-react"
-import { usePageTitle } from "../hooks"
+import { ArrowRight, ShieldCheck, Flame, Copy, CircleAlert as AlertCircle, CircleCheck as CheckCircle2, Loader as Loader2 } from "lucide-react"
+import { useCredits } from "../hooks"
+import {
+  formatNumber,
+  shortAddress,
+  retireCredit,
+  transferCredit,
+  type Credit,
+} from "../api"
+import { categoryOf, volumeOf } from "../stats"
+import { StatusPill } from "../components/ui"
+import PageHeader from "../components/PageHeader"
 
-// Mock portfolio data for the dashboard
-const PORTFOLIO = [
-  { id: "4920", project: "Rimba Raya Biodiversity", volume: 25000, status: "Active", vintage: 2023 },
-  { id: "4921", project: "Keo Seima Wildlife", volume: 10000, status: "Active", vintage: 2022 },
-  { id: "4810", project: "Solar Farm Rajasthan", volume: 5000, status: "Retired", vintage: 2021 },
-]
+function CopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false)
+  return (
+    <button
+      onClick={() => {
+        navigator.clipboard.writeText(text)
+        setCopied(true)
+        setTimeout(() => setCopied(false), 2000)
+      }}
+      className="rounded p-1 text-mute hover:text-emerald-bright"
+      aria-label="Copy to clipboard"
+    >
+      {copied ? (
+        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-bright" />
+      ) : (
+        <Copy className="h-3.5 w-3.5" />
+      )}
+    </button>
+  )
+}
 
 export default function ManageCredit() {
-  usePageTitle("Portfolio Manager")
-  const [activeTab, setActiveTab] = useState<"holdings" | "history">("holdings")
+  const { credits, loading } = useCredits()
+  const [selectedId, setSelectedId] = useState<number | null>(null)
+  const [newOwner, setNewOwner] = useState("")
+  const [actionLoading, setActionLoading] = useState(false)
+  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null)
+
+  const activeCredits = (credits as Credit[]).filter((c) => !c.retired)
+  const selectedCredit = selectedId !== null
+    ? (credits as Credit[]).find((c) => c.id === selectedId)
+    : null
+
+  async function handleRetire() {
+    if (!selectedCredit) return
+    setActionLoading(true)
+    setMessage(null)
+    try {
+      const result = await retireCredit(selectedCredit.id)
+      setMessage({ type: "success", text: `Credit retired. Tx: ${result.tx_hash.slice(0, 10)}...` })
+      setSelectedId(null)
+    } catch {
+      setMessage({ type: "error", text: "Failed to retire credit. Please try again." })
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  async function handleTransfer() {
+    if (!selectedCredit || !newOwner.trim()) return
+    if (!/^0x[a-fA-F0-9]{40}$/.test(newOwner.trim())) {
+      setMessage({ type: "error", text: "Invalid Ethereum address format." })
+      return
+    }
+    setActionLoading(true)
+    setMessage(null)
+    try {
+      const result = await transferCredit(selectedCredit.id, newOwner.trim())
+      setMessage({ type: "success", text: `Credit transferred. Tx: ${result.tx_hash.slice(0, 10)}...` })
+      setSelectedId(null)
+      setNewOwner("")
+    } catch {
+      setMessage({ type: "error", text: "Failed to transfer credit. Please try again." })
+    } finally {
+      setActionLoading(false)
+    }
+  }
 
   return (
-    <div className="pb-24 pt-10">
-      <div className="mx-auto max-w-7xl px-5 lg:px-8">
-        
-        {/* Header Section */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
-          <div>
-            <h1 className="text-3xl font-bold text-paper sm:text-4xl">Portfolio Manager</h1>
-            <p className="mt-2 text-mute">Manage your institutional carbon holdings, execute transfers, and verify retirements.</p>
-          </div>
-          <div className="flex items-center gap-3 bg-ink-2 border border-line rounded-xl p-3">
-            <div className="h-10 w-10 rounded-lg bg-emerald/10 flex items-center justify-center text-emerald-bright">
-              <Wallet className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="text-xs text-mute uppercase tracking-wider">Connected Wallet</p>
-              <p className="font-mono text-sm text-paper">0x8F9a...2B4c</p>
-            </div>
-          </div>
-        </div>
+    <>
+      <PageHeader
+        eyebrow="Portfolio Management"
+        title="Manage Credits"
+        intro="Retire or transfer credits from your portfolio. All actions are recorded permanently on-chain."
+      />
 
-        {/* High-Level Metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-          <div className="bg-ink-2 border border-line rounded-2xl p-6 relative overflow-hidden">
-            <div className="absolute -right-4 -top-4 h-24 w-24 bg-emerald-500/10 rounded-full blur-2xl" />
-            <p className="text-sm font-medium text-mute mb-2">Total Active Volume</p>
-            <p className="text-4xl font-mono font-bold text-paper">35,000 <span className="text-lg text-mute font-sans">tCO₂e</span></p>
-          </div>
-          <div className="bg-ink-2 border border-line rounded-2xl p-6 relative overflow-hidden">
-            <div className="absolute -right-4 -top-4 h-24 w-24 bg-amber-500/10 rounded-full blur-2xl" />
-            <p className="text-sm font-medium text-mute mb-2">Total Retired Volume</p>
-            <p className="text-4xl font-mono font-bold text-paper">5,000 <span className="text-lg text-mute font-sans">tCO₂e</span></p>
-          </div>
-          <div className="bg-ink-2 border border-line rounded-2xl p-6 flex flex-col justify-center">
-            <Link to="/create" className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-emerald/10 border border-emerald/20 px-4 py-3 font-semibold text-emerald-bright hover:bg-emerald/20 transition-colors">
-              Issue New Credits <ArrowUpRight className="h-4 w-4" />
-            </Link>
-          </div>
-        </div>
-
-        {/* Tab Navigation */}
-        <div className="flex items-center gap-6 border-b border-line mb-6">
-          <button 
-            onClick={() => setActiveTab("holdings")}
-            className={`pb-4 text-sm font-medium transition-colors border-b-2 ${activeTab === "holdings" ? "border-emerald-bright text-emerald-bright" : "border-transparent text-mute hover:text-paper"}`}
+      <div className="mx-auto max-w-5xl px-5 py-10 lg:px-8">
+        {/* Message */}
+        {message && (
+          <div
+            className={`mb-6 flex items-center gap-3 rounded-xl border p-4 ${
+              message.type === "success"
+                ? "border-emerald/30 bg-emerald/10 text-emerald-bright"
+                : "border-red-500/30 bg-red-500/10 text-red-400"
+            }`}
           >
-            Current Holdings
-          </button>
-          <button 
-            onClick={() => setActiveTab("history")}
-            className={`pb-4 text-sm font-medium transition-colors border-b-2 ${activeTab === "history" ? "border-emerald-bright text-emerald-bright" : "border-transparent text-mute hover:text-paper"}`}
-          >
-            Transaction History
-          </button>
-        </div>
+            {message.type === "success" ? (
+              <CheckCircle2 className="h-5 w-5" />
+            ) : (
+              <AlertCircle className="h-5 w-5" />
+            )}
+            {message.text}
+          </div>
+        )}
 
-        {/* Asset Table */}
-        <div className="bg-ink-2 border border-line rounded-2xl overflow-hidden">
-          <table className="w-full text-left text-sm whitespace-nowrap">
-            <thead className="bg-ink border-b border-line text-mute">
-              <tr>
-                <th className="px-6 py-4 font-medium">Asset ID</th>
-                <th className="px-6 py-4 font-medium">Project</th>
-                <th className="px-6 py-4 font-medium">Vintage</th>
-                <th className="px-6 py-4 font-medium">Volume (tCO₂e)</th>
-                <th className="px-6 py-4 font-medium">Status</th>
-                <th className="px-6 py-4 font-medium text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-line">
-              {PORTFOLIO.filter(p => activeTab === "holdings" ? p.status === "Active" : p.status === "Retired").map((asset) => (
-                <tr key={asset.id} className="hover:bg-ink/50 transition-colors">
-                  <td className="px-6 py-4 font-mono text-mute">#{asset.id}</td>
-                  <td className="px-6 py-4 text-paper font-medium">{asset.project}</td>
-                  <td className="px-6 py-4 font-mono text-paper">{asset.vintage}</td>
-                  <td className="px-6 py-4 font-mono text-paper">{asset.volume.toLocaleString()}</td>
-                  <td className="px-6 py-4">
-                    <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${asset.status === "Active" ? "bg-emerald/10 text-emerald-bright border border-emerald/20" : "bg-slate-800 text-mute border border-line"}`}>
-                      {asset.status === "Active" ? <ShieldCheck className="h-3 w-3" /> : <History className="h-3 w-3" />}
-                      {asset.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    {asset.status === "Active" ? (
-                      <div className="flex justify-end gap-2">
-                        <button className="inline-flex items-center gap-1 rounded-md bg-ink border border-line px-3 py-1.5 text-xs font-medium text-paper hover:bg-ink-3 transition-colors">
-                          <Send className="h-3 w-3" /> Transfer
-                        </button>
-                        <button className="inline-flex items-center gap-1 rounded-md bg-red-500/10 border border-red-500/20 px-3 py-1.5 text-xs font-medium text-red-400 hover:bg-red-500/20 transition-colors">
-                          <Flame className="h-3 w-3" /> Retire
-                        </button>
+        <div className="grid gap-8 lg:grid-cols-3">
+          {/* Credit list */}
+          <div className="lg:col-span-2">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-paper">
+                Active Credits ({activeCredits.length})
+              </h2>
+              <Link
+                to="/registry"
+                className="text-sm text-emerald-bright hover:underline"
+              >
+                View all credits
+              </Link>
+            </div>
+
+            {loading ? (
+              <div className="mt-4 space-y-3">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="h-20 animate-pulse rounded-xl bg-ink-2" />
+                ))}
+              </div>
+            ) : activeCredits.length === 0 ? (
+              <div className="mt-6 rounded-xl border border-dashed border-line bg-ink-2 p-10 text-center">
+                <p className="text-mute">No active credits available to manage.</p>
+                <Link
+                  to="/create"
+                  className="mt-4 inline-flex items-center gap-2 text-emerald-bright"
+                >
+                  Issue a new credit <ArrowRight className="h-4 w-4" />
+                </Link>
+              </div>
+            ) : (
+              <div className="mt-4 space-y-3">
+                {activeCredits.map((c) => (
+                  <button
+                    key={c.id}
+                    onClick={() => setSelectedId(c.id)}
+                    className={`w-full rounded-xl border p-4 text-left transition-all ${
+                      selectedId === c.id
+                        ? "border-emerald bg-emerald/10"
+                        : "border-line bg-ink-2 hover:border-line-2"
+                    }`}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3">
+                          <StatusPill credit={c} />
+                          <span className="font-mono text-xs text-mute">
+                            #{c.id.toString().padStart(4, "0")}
+                          </span>
+                        </div>
+                        <p className="mt-2 font-medium text-paper">
+                          {c.project}
+                        </p>
+                        <p className="mt-1 text-sm text-mute">
+                          {categoryOf(c.project)} · {c.country}
+                        </p>
                       </div>
-                    ) : (
-                      <Link to={`/credit/${asset.id}`} className="text-emerald-bright hover:text-emerald text-xs font-medium">View Certificate</Link>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {activeTab === "history" && (
-            <div className="p-6 text-center border-t border-line">
-               <p className="text-sm text-mute">Retirements are permanent and cryptographically verified.</p>
+                      <div className="text-right">
+                        <p className="font-mono text-sm text-paper">
+                          {formatNumber(volumeOf(c))}
+                        </p>
+                        <p className="text-xs text-mute">tCO₂e</p>
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Action panel */}
+          <div className="lg:col-span-1">
+            <div className="sticky top-24 rounded-2xl border border-line bg-ink-2 p-6">
+              <h3 className="text-lg font-semibold text-paper">Actions</h3>
+              {selectedCredit ? (
+                <div className="mt-4">
+                  <p className="font-medium text-paper">
+                    {selectedCredit.project}
+                  </p>
+                  <p className="mt-1 text-sm text-mute">
+                    {formatNumber(volumeOf(selectedCredit))} tCO₂e · #{selectedCredit.id}
+                  </p>
+                  <p className="mt-3 flex items-center gap-2 text-sm text-mute">
+                    Owner:
+                    <span className="font-mono text-paper">
+                      {shortAddress(selectedCredit.owner)}
+                    </span>
+                    <CopyButton text={selectedCredit.owner} />
+                  </p>
+
+                  {/* Retire */}
+                  <div className="mt-6 border-t border-line pt-6">
+                    <div className="flex items-center gap-2">
+                      <Flame className="h-5 w-5 text-sky-300" />
+                      <h3 className="font-semibold text-paper">Retire Credit</h3>
+                    </div>
+                    <p className="mt-2 text-sm text-mute">
+                      Permanently remove this credit from circulation. This
+                      action cannot be undone.
+                    </p>
+                    <button
+                      onClick={handleRetire}
+                      disabled={actionLoading}
+                      className="mt-4 w-full rounded-lg border border-sky-500/30 bg-sky-500/10 px-4 py-2.5 font-medium text-sky-300 transition-colors hover:bg-sky-500/20 disabled:opacity-50"
+                    >
+                      {actionLoading ? (
+                        <Loader2 className="mx-auto h-4 w-4 animate-spin" />
+                      ) : (
+                        "Retire Credit"
+                      )}
+                    </button>
+                  </div>
+
+                  {/* Transfer */}
+                  <div className="mt-6 border-t border-line pt-6">
+                    <div className="flex items-center gap-2">
+                      <ArrowRight className="h-5 w-5 text-emerald-bright" />
+                      <h3 className="font-semibold text-paper">
+                        Transfer Ownership
+                      </h3>
+                    </div>
+                    <p className="mt-2 text-sm text-mute">
+                      Transfer this credit to a new wallet address.
+                    </p>
+                    <input
+                      type="text"
+                      value={newOwner}
+                      onChange={(e) => setNewOwner(e.target.value)}
+                      placeholder="0x..."
+                      className="mt-3 w-full rounded-lg border border-line bg-ink px-3 py-2.5 font-mono text-sm text-paper outline-none transition-colors placeholder:text-mute focus:border-emerald"
+                    />
+                    <button
+                      onClick={handleTransfer}
+                      disabled={actionLoading || !newOwner.trim()}
+                      className="mt-3 w-full rounded-lg bg-emerald px-4 py-2.5 font-medium text-ink transition-colors hover:bg-emerald-bright disabled:opacity-50"
+                    >
+                      {actionLoading ? (
+                        <Loader2 className="mx-auto h-4 w-4 animate-spin" />
+                      ) : (
+                        "Transfer Credit"
+                      )}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="mt-6 rounded-xl border border-dashed border-line p-8 text-center">
+                  <ShieldCheck className="mx-auto h-8 w-8 text-mute" />
+                  <p className="mt-4 text-mute">
+                    Select a credit from the list to manage it.
+                  </p>
+                </div>
+              )}
             </div>
-          )}
+          </div>
         </div>
       </div>
-    </div>
+    </>
   )
 }
