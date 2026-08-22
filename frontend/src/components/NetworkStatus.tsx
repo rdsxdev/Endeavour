@@ -9,7 +9,13 @@ import { useHealth } from "../hooks"
  * Reflects the real /health probe; when the backend is offline the platform
  * runs against its mirrored registry snapshot, which we surface honestly.
  */
-export default function NetworkStatus({ inline = false }: { inline?: boolean }) {
+export default function NetworkStatus({
+  inline = false,
+  dark = false,
+}: {
+  inline?: boolean
+  dark?: boolean
+}) {
   const { health, live } = useHealth()
 
   const items = [
@@ -36,7 +42,7 @@ export default function NetworkStatus({ inline = false }: { inline?: boolean }) 
               item.ok ? "bg-emerald" : "bg-amber-400"
             }`}
           />
-          <span className="text-mute">{item.label}</span>
+          <span className={dark ? "text-ink/60" : "text-mute"}>{item.label}</span>
         </span>
       ))}
       {!inline && health && (

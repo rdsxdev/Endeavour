@@ -1,8 +1,8 @@
 import { Link } from "react-router-dom"
-import { MapPin, ArrowUpRight } from "lucide-react"
 import { type Credit, formatNumber } from "../api"
-import { StatusPill } from "./ui.tsx"
+import { StatusPill } from "./ui"
 import { categoryOf, volumeOf } from "../stats"
+import { poolForCredit } from "../lib/poolForCredit"
 
 import forest from "../assets/project-forest.jpg"
 import solar from "../assets/project-solar.jpg"
@@ -18,62 +18,56 @@ const IMAGERY: Record<string, string> = {
   Peatland: renewable,
 }
 
+const POOL_SYMBOL: Record<string, string> = {
+  carbon: "eCO₂",
+  bio: "eBIO",
+  bond: "eGBND",
+}
+
 export default function CreditCard({ credit }: { credit: Credit }) {
   const category = categoryOf(credit.project)
   const image = IMAGERY[category] ?? forest
   const volume = volumeOf(credit)
+  const pool = poolForCredit(credit)
 
   return (
     <Link
       to={`/credit/${credit.id}`}
-      className="group relative flex flex-col overflow-hidden rounded-2xl border border-line bg-ink transition-all duration-300 hover:-translate-y-1 hover:border-emerald/30 hover:shadow-2xl hover:shadow-emerald-950/10"
+      className="group surface flex flex-col overflow-hidden transition hover:border-emerald/40"
     >
-      <div className="relative h-44 overflow-hidden">
+      <div className="relative h-40 overflow-hidden">
         <img
-          src={image || "/placeholder.svg"}
-          alt={`${credit.project} — ${category}`}
-          className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+          src={image}
+          alt=""
+          className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
           loading="lazy"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-paper/60 to-transparent" />
         <div className="absolute left-3 top-3">
           <StatusPill credit={credit} />
         </div>
-        <span className="absolute right-3 top-3 rounded-full bg-white/90 px-2.5 py-1 font-mono text-[0.7rem] text-paper backdrop-blur">
-          #{credit.id.toString().padStart(4, "0")}
+        <span className="absolute right-3 top-3 bg-ink/90 px-2 py-0.5 font-mono text-[0.65rem] text-paper">
+          {POOL_SYMBOL[pool]}
         </span>
       </div>
 
       <div className="flex flex-1 flex-col p-5">
-        <p className="eyebrow text-emerald-deep">{category}</p>
-        <h3 className="mt-2 text-lg font-semibold leading-snug text-paper">
-          {credit.project}
-        </h3>
-        <p className="mt-1.5 flex items-center gap-1.5 text-sm text-mute">
-          <MapPin className="h-3.5 w-3.5" />
-          {credit.country}
-        </p>
+        <p className="label">{category}</p>
+        <h3 className="mt-1.5 font-serif text-lg leading-snug text-paper">{credit.project}</h3>
+        <p className="mt-1 text-sm text-mute">{credit.country}</p>
 
-        <div className="mt-5 flex items-end justify-between border-t border-line pt-4">
+        <div className="mt-auto flex items-end justify-between border-t border-line pt-4">
           <div>
-            <p className="text-[0.7rem] uppercase tracking-wider text-mute">
-              Volume
-            </p>
+            <p className="label">Volume</p>
             <p className="font-mono text-sm text-paper">
               {formatNumber(volume)} <span className="text-mute">tCO₂e</span>
             </p>
           </div>
           <div className="text-right">
-            <p className="text-[0.7rem] uppercase tracking-wider text-mute">
-              Vintage
-            </p>
+            <p className="label">Vintage</p>
             <p className="font-mono text-sm text-paper">{credit.vintage_year}</p>
           </div>
         </div>
-
-        <span className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-emerald-deep opacity-0 transition-opacity group-hover:opacity-100">
-          View asset <ArrowUpRight className="h-4 w-4" />
-        </span>
       </div>
     </Link>
   )

@@ -1,24 +1,25 @@
-import { Routes, Route, useLocation } from "react-router-dom"
-import { Suspense, lazy, useEffect } from "react"
-import Navbar from "./components/Navbar"
-import Footer from "./components/Footer.tsx"
-import ErrorBoundary from "./components/ErrorBoundary"
+import { Routes, Route, useLocation } from "react-router-dom";
+import { Suspense, lazy, useEffect } from "react";
+import Navbar from "./components/Navbar";
+import Footer from "./components/Footer.tsx";
+import ErrorBoundary from "./components/ErrorBoundary";
+import LS from "./lib/LS.tsx";
 
-const Home = lazy(() => import("./pages/Home"))
-const Registry = lazy(() => import("./pages/Registry"))
-const Analytics = lazy(() => import("./pages/Analytics"))
-const CreateCredit = lazy(() => import("./pages/CreateCredit"))
-const ManageCredit = lazy(() => import("./pages/ManageCredit"))
-const ProjectDetails = lazy(() => import("./pages/ProjectDetails"))
-const About = lazy(() => import("./pages/About"))
-const NotFound = lazy(() => import("./pages/NotFound"))
+const Home = lazy(() => import("./pages/Home"));
+const Registry = lazy(() => import("./pages/Registry"));
+const Analytics = lazy(() => import("./pages/Analytics"));
+const CreateCredit = lazy(() => import("./pages/CreateCredit"));
+const ManageCredit = lazy(() => import("./pages/ManageCredit"));
+const ProjectDetails = lazy(() => import("./pages/ProjectDetails"));
+const About = lazy(() => import("./pages/About"));
+const NotFound = lazy(() => import("./pages/NotFound"));
 
 function ScrollToTop() {
-  const { pathname } = useLocation()
+  const { pathname } = useLocation();
   useEffect(() => {
-    window.scrollTo(0, 0)
-  }, [pathname])
-  return null
+    window.scrollTo(0, 0);
+  }, [pathname]);
+  return null;
 }
 
 export default function App() {
@@ -27,8 +28,15 @@ export default function App() {
       <ScrollToTop />
       <Navbar />
       <main className="flex-1">
+        <LS></LS>
         <ErrorBoundary>
-          <Suspense fallback={<div className="flex min-h-[50vh] items-center justify-center text-mute">Loading…</div>}>
+          <Suspense
+            fallback={
+              <div className="flex min-h-[50vh] items-center justify-center text-mute">
+                Loading…
+              </div>
+            }
+          >
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/registry" element={<Registry />} />
@@ -44,5 +52,5 @@ export default function App() {
       </main>
       <Footer />
     </div>
-  )
+  );
 }

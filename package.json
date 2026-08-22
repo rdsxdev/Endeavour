@@ -18,5 +18,8 @@
     "hardhat": "^3.7.0",
     "typescript": "~6.0.3",
     "viem": "^2.52.0"
+  },
+  "dependencies": {
+    "locomotive-scroll": "^5.0.0-beta.21"
   }
 }

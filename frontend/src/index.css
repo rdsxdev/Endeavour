@@ -1,37 +1,49 @@
 @import "tailwindcss";
 
 /*
-  ENDEAVOUR — Design System
-  Institutional climate-finance infrastructure.
-  White/off-white surfaces, preserved Endeavour emerald accents,
-  editorial typography.
+  ENDEAVOUR — Climate Finance Design System
+  Institutional token infrastructure for carbon, biodiversity & green bonds.
 */
 
-:root {
-  /* Brand palette */
-  --color-ink: #ffffff;
-  --color-ink-2: #f7f8f5;
-  --color-ink-3: #eef2ec;
-  --color-line: #dce4dc;
-  --color-line-2: #c3d0c4;
+/*  */
+@theme {
+  --color-white: #ffffff;
+  --color-ink: #fafaf8;
+  --color-ink-2: #f3f4f0;
+  --color-ink-3: #e8ebe4;
+  --color-line: #d4dbd0;
+  --color-line-2: #b8c4b8;
 
-  --color-paper: #102017;
-  --color-mute: #5f6f65;
-  --color-mute-2: #819187;
+  --color-paper: #142019;
+  --color-paper-2: #1e2e24;
+  --color-mute: #5a6b60;
+  --color-mute-2: #849488;
 
-  --color-emerald: #10b981;
-  --color-emerald-bright: #34d399;
-  --color-emerald-deep: #047857;
+  --color-emerald: #2d6a4f;
+  --color-emerald-bright: #40916c;
+  --color-emerald-deep: #1b4332;
 
-  /* Typography */
-  --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --color-pool-carbon: #2d6a4f;
+  --color-pool-bio: #52796f;
+  --color-pool-bond: #6b5b4e;
 
-  --radius: 0.75rem;
+  --color-amber: #b08968;
+  --color-sky: #457b9d;
+
+  --font-sans: "Inter", system-ui, sans-serif;
+  --font-serif: "Source Serif 4", Georgia, serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+
+  --radius: 0.5rem;
 }
 
 :root {
   color-scheme: light;
+
+  --font-sans:
+    "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-serif: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
 }
 
 * {
@@ -40,25 +52,31 @@
 
 html {
   background-color: var(--color-ink);
-  scroll-behavior: smooth;
+  /* scroll-behavior: smooth; */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  text-rendering: optimizeLegibility;
 }
 
 body {
   margin: 0;
   background:
-    radial-gradient(circle at top left, rgba(16, 185, 129, 0.08), transparent 32rem),
+    radial-gradient(
+      ellipse 80% 50% at 0% 0%,
+      rgba(45, 106, 79, 0.06),
+      transparent
+    ),
+    radial-gradient(
+      ellipse 60% 40% at 100% 100%,
+      rgba(107, 91, 78, 0.04),
+      transparent
+    ),
     var(--color-ink);
   color: var(--color-paper);
   font-family: var(--font-sans);
   font-size: 16px;
   line-height: 1.6;
-  letter-spacing: 0;
 }
 
-/* Reset the legacy element styles that shipped with the starter */
 a {
   color: inherit;
   text-decoration: none;
@@ -75,17 +93,20 @@ textarea {
   font-family: inherit;
 }
 
+.font-serif {
+  font-family: var(--font-serif);
+}
+
+/* ── Form inputs ── */
 .input {
   width: 100%;
-  border-radius: 0.75rem;
+  border-radius: var(--radius);
   border: 1px solid var(--color-line);
   background: #fff;
   padding: 0.875rem 1rem;
   color: var(--color-paper);
   outline: none;
-  transition:
-    border-color 180ms ease,
-    box-shadow 180ms ease;
+  transition: border-color 180ms ease;
 }
 
 .input::placeholder {
@@ -93,66 +114,73 @@ textarea {
 }
 
 .input:focus {
-  border-color: rgba(16, 185, 129, 0.55);
-  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.12);
+  border-color: var(--color-emerald);
 }
 
 h1,
 h2,
 h3,
 h4 {
-  letter-spacing: 0;
-  line-height: 1.05;
+  letter-spacing: -0.02em;
+  line-height: 1.12;
   text-wrap: balance;
 }
 
-/* Utility: thin uppercase editorial eyebrow */
+/* ── Typography utilities ── */
 .eyebrow {
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   font-weight: 600;
-  letter-spacing: 0.28em;
+  letter-spacing: 0.22em;
   text-transform: uppercase;
 }
 
-/* Subtle dotted grid background used across sections */
+.label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-mute);
+}
+
+/* ── Surfaces (border-based, no generic shadows) ── */
+.surface {
+  border: 1px solid var(--color-line);
+  background: var(--color-ink);
+  border-radius: var(--radius);
+}
+
+.surface-inset {
+  border: 1px solid var(--color-line);
+  background: var(--color-ink-2);
+  border-radius: var(--radius);
+}
+
+/* Subtle topographic grid */
 .grid-bg {
-  background-image: radial-gradient(
-    circle at 1px 1px,
-    rgba(4, 120, 87, 0.1) 1px,
-    transparent 0
-  );
-  background-size: 32px 32px;
+  background-image:
+    linear-gradient(rgba(45, 106, 79, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(45, 106, 79, 0.04) 1px, transparent 1px);
+  background-size: 48px 48px;
 }
 
-/* Faint top-down fade for hero overlays */
-.hero-veil {
-  background: linear-gradient(
-    180deg,
-    rgba(5, 17, 13, 0.58) 0%,
-    rgba(5, 17, 13, 0.25) 35%,
-    rgba(5, 17, 13, 0.74) 78%,
-    rgba(255, 255, 255, 1) 100%
-  );
-}
-
+/* ── Animations ── */
 @keyframes endv-slow-zoom {
   from {
     transform: scale(1);
   }
   to {
-    transform: scale(1.08);
+    transform: scale(1.06);
   }
 }
 
 .animate-slow-zoom {
-  animation: endv-slow-zoom 18s ease-in-out infinite alternate;
+  animation: endv-slow-zoom 22s ease-in-out infinite alternate;
 }
 
-/* Reveal-on-scroll animation */
 @keyframes endv-rise {
   from {
     opacity: 0;
-    transform: translateY(22px);
+    transform: translateY(18px);
   }
   to {
     opacity: 1;
@@ -165,27 +193,33 @@ h4 {
 }
 
 .reveal.is-visible {
-  animation: endv-rise 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: endv-rise 0.75s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation-delay: var(--reveal-delay, 0ms);
 }
 
-/* Live status pulse */
+@keyframes endv-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 @keyframes endv-pulse {
   0%,
   100% {
     opacity: 1;
-    transform: scale(1);
   }
   50% {
-    opacity: 0.45;
-    transform: scale(0.78);
+    opacity: 0.4;
   }
 }
 
 .pulse-dot {
-  animation: endv-pulse 2.4s ease-in-out infinite;
+  animation: endv-pulse 2.8s ease-in-out infinite;
 }
 
-/* Slow drift for background network layers */
 @keyframes endv-drift {
   from {
     background-position: 0 0;
@@ -195,17 +229,68 @@ h4 {
   }
 }
 
-/* Custom scrollbar for data tables */
-.thin-scroll::-webkit-scrollbar {
-  height: 8px;
-  width: 8px;
+/*
+  Native scrollbars — thin system-style bars, theme-colored.
+  Firefox: scrollbar-width + scrollbar-color
+  Chromium/Safari: ::-webkit-scrollbar (inset thumb mimics native appearance)
+*/
+html {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-line-2) var(--color-ink);
 }
-.thin-scroll::-webkit-scrollbar-thumb {
-  background: var(--color-line-2);
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-line-2) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-ink);
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: var(--color-line-2);
+  border: 3px solid var(--color-ink);
   border-radius: 999px;
 }
-.thin-scroll::-webkit-scrollbar-track {
-  background: transparent;
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-emerald);
+}
+
+::-webkit-scrollbar-thumb:active {
+  background-color: var(--color-emerald-deep);
+}
+
+::-webkit-scrollbar-corner {
+  background: var(--color-ink);
+}
+
+/* Nested overflow regions (tables) — slightly narrower track */
+.thin-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-line-2) transparent;
+}
+
+.thin-scroll::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.thin-scroll::-webkit-scrollbar-thumb {
+  border-width: 2px;
+}
+
+/* Stat strip on home */
+.stat-strip {
+  border-top: 1px solid var(--color-line);
+  border-bottom: 1px solid var(--color-line);
+  background: var(--color-ink-2);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -214,7 +299,8 @@ h4 {
     animation: none;
     opacity: 1;
   }
-  .pulse-dot {
+  .pulse-dot,
+  .animate-slow-zoom {
     animation: none;
   }
   html {

@@ -23,7 +23,7 @@ const SITE_NAME = "Endeavour"
 /* useReveal — intersection-observer fade-in                           */
 /* ------------------------------------------------------------------ */
 
-export function useReveal<T extends HTMLElement>() {
+export function useReveal<T extends HTMLElement = HTMLDivElement>() {
   const ref = useRef<T>(null)
 
   useEffect(() => {

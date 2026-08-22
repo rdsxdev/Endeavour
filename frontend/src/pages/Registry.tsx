@@ -1,15 +1,6 @@
 import { useMemo, useState } from "react"
 import { Link } from "react-router-dom"
-import {
-  Activity,
-  Globe2,
-  Layers,
-  LayoutGrid,
-  List,
-  Search,
-  SlidersHorizontal,
-  X,
-} from "lucide-react"
+import { Search, X } from "lucide-react"
 import { useCredits, usePageTitle } from "../hooks"
 import {
   creditStatus,
@@ -19,14 +10,24 @@ import {
   type Credit,
 } from "../api"
 import { categoryOf, volumeOf, type Category } from "../stats"
+import { POOLS, type PoolKind } from "../pools"
+import { poolForCredit } from "../lib/poolForCredit"
 import CreditCard from "../components/CreditCard"
 import PageHeader from "../components/PageHeader"
+import Reveal from "../components/Reveal"
 import { StatusPill } from "../components/ui"
 
 type StatusFilter = "All" | "Verified" | "Retired" | "Pending"
 type SortKey = "newest" | "oldest" | "vintage" | "volume"
+type PoolFilter = "All" | PoolKind
 
 const STATUS_FILTERS: StatusFilter[] = ["All", "Verified", "Retired", "Pending"]
+const POOL_FILTERS: { key: PoolFilter; label: string }[] = [
+  { key: "All", label: "All pools" },
+  { key: "carbon", label: "CarbonPool" },
+  { key: "bio", label: "BioPool" },
+  { key: "bond", label: "Green Bond" },
+]
 const CATEGORIES: (Category | "All")[] = [
   "All",
   "Forest Conservation",
@@ -42,6 +43,7 @@ export default function Registry() {
   const [query, setQuery] = useState("")
   const [status, setStatus] = useState<StatusFilter>("All")
   const [category, setCategory] = useState<Category | "All">("All")
+  const [pool, setPool] = useState<PoolFilter>("All")
   const [sort, setSort] = useState<SortKey>("newest")
   const [view, setView] = useState<"table" | "grid">("table")
 
@@ -57,7 +59,8 @@ export default function Registry() {
         return (
           matchesQuery &&
           (status === "All" || creditStatus(c) === status) &&
-          (category === "All" || categoryOf(c.project) === category)
+          (category === "All" || categoryOf(c.project) === category) &&
+          (pool === "All" || poolForCredit(c) === pool)
         )
       })
       .sort((a, b) => {
@@ -66,7 +69,7 @@ export default function Registry() {
         if (sort === "volume") return volumeOf(b) - volumeOf(a)
         return b.created_at - a.created_at
       })
-  }, [credits, query, status, category, sort])
+  }, [credits, query, status, category, pool, sort])
 
   const summary = useMemo(() => {
     const volume = filtered.reduce((sum, c) => sum + volumeOf(c), 0)
@@ -75,119 +78,155 @@ export default function Registry() {
     return { volume, projects, countries }
   }, [filtered])
 
-  const hasActiveFilters = query !== "" || status !== "All" || category !== "All"
+  const hasActiveFilters = query !== "" || status !== "All" || category !== "All" || pool !== "All"
   const clearFilters = () => {
     setQuery("")
     setStatus("All")
     setCategory("All")
+    setPool("All")
   }
 
   return (
     <div className="min-h-screen bg-ink">
       <PageHeader
-        eyebrow="Verra-style Registry Explorer"
-        title="Registry Explorer"
-        intro="Search every Endeavour credit by project, country, vintage, verification state and current ownership."
+        eyebrow="On-chain registry"
+        title="Registry"
+        intro="Search credits across CarbonPool, BioPool, and Green Bond Vault — filter by project, jurisdiction, vintage, and verification state."
       >
-        <div className="inline-flex items-center gap-2 rounded-lg border border-line bg-ink px-4 py-2.5 shadow-sm">
-          <span className={`pulse-dot h-2 w-2 rounded-full ${live ? "bg-emerald" : "bg-amber-400"}`} />
-          <span className="text-sm font-medium text-mute">
-            {live ? "Live Endeavour data" : "Registry snapshot"}
-          </span>
+        <div className="surface flex items-center gap-2 px-4 py-2.5">
+          <span className={`pulse-dot h-1.5 w-1.5 rounded-full ${live ? "bg-emerald" : "bg-amber"}`} />
+          <span className="text-sm text-mute">{live ? "Live data" : "Snapshot"}</span>
         </div>
       </PageHeader>
 
       <div className="mx-auto max-w-7xl px-5 py-10 lg:px-8">
         {!loading && (
           <div className="mb-8 grid gap-4 md:grid-cols-3">
-            <SummaryCard icon={<Activity />} label="Filtered Volume" value={`${formatCompact(summary.volume)} tCO2e`} />
-            <SummaryCard icon={<Layers />} label="Projects Listed" value={formatNumber(summary.projects)} />
-            <SummaryCard icon={<Globe2 />} label="Countries" value={formatNumber(summary.countries)} />
+            <Reveal>
+              <SummaryStat label="Filtered volume" value={`${formatCompact(summary.volume)} tCO₂e`} />
+            </Reveal>
+            <Reveal delay={60}>
+              <SummaryStat label="Projects" value={formatNumber(summary.projects)} />
+            </Reveal>
+            <Reveal delay={120}>
+              <SummaryStat label="Countries" value={formatNumber(summary.countries)} />
+            </Reveal>
           </div>
         )}
 
-        <div className="rounded-3xl border border-line bg-ink-2 p-4 shadow-sm">
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
-            <label className="relative flex-1">
-              <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-mute" />
-              <input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search project, country, or credit ID"
-                className="w-full rounded-xl border border-line bg-ink py-3.5 pl-12 pr-4 text-paper outline-none transition placeholder:text-mute focus:border-emerald/50 focus:ring-4 focus:ring-emerald/10"
-              />
-            </label>
-            <div className="flex flex-wrap items-center gap-3">
-              <label className="flex items-center gap-2 rounded-xl border border-line bg-ink px-4 py-3">
-                <SlidersHorizontal className="h-4 w-4 text-mute" />
+        {/* Pool quick-nav */}
+        <Reveal className="mb-6">
+          <div className="flex flex-wrap gap-3">
+            {POOLS.map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => setPool(p.kind)}
+                className={`border px-4 py-2 text-left text-sm transition ${
+                  pool === p.kind
+                    ? "border-emerald bg-emerald/8 text-emerald-deep"
+                    : "border-line bg-ink-2 text-mute hover:text-paper"
+                }`}
+              >
+                <span className="font-mono text-xs">{p.symbol}</span>
+                <span className="ml-2">{p.name}</span>
+              </button>
+            ))}
+          </div>
+        </Reveal>
+
+        <Reveal>
+          <div className="surface-inset p-4">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+              <label className="relative flex-1">
+                <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-mute" />
+                <input
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Search project, country, or credit ID"
+                  className="input pl-11"
+                />
+              </label>
+              <div className="flex flex-wrap items-center gap-3">
                 <select
                   value={sort}
                   onChange={(e) => setSort(e.target.value as SortKey)}
-                  className="bg-transparent text-sm font-medium text-paper outline-none"
+                  className="input w-auto py-2.5 text-sm"
                 >
                   <option value="newest">Newest first</option>
                   <option value="oldest">Oldest first</option>
                   <option value="vintage">Vintage year</option>
-                  <option value="volume">Volume high to low</option>
+                  <option value="volume">Volume high → low</option>
                 </select>
-              </label>
-              <div className="flex overflow-hidden rounded-xl border border-line bg-ink">
-                <button
-                  onClick={() => setView("table")}
-                  aria-label="Table view"
-                  className={`p-3 ${view === "table" ? "bg-emerald/10 text-emerald-deep" : "text-mute hover:text-paper"}`}
-                >
-                  <List className="h-5 w-5" />
-                </button>
-                <button
-                  onClick={() => setView("grid")}
-                  aria-label="Card view"
-                  className={`p-3 ${view === "grid" ? "bg-emerald/10 text-emerald-deep" : "text-mute hover:text-paper"}`}
-                >
-                  <LayoutGrid className="h-5 w-5" />
-                </button>
+                <div className="flex border border-line">
+                  {(["table", "grid"] as const).map((v) => (
+                    <button
+                      key={v}
+                      type="button"
+                      onClick={() => setView(v)}
+                      className={`px-4 py-2.5 text-sm capitalize ${
+                        view === v ? "bg-emerald/8 text-emerald-deep" : "text-mute hover:text-paper"
+                      }`}
+                    >
+                      {v}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
 
-          <div className="mt-4 flex flex-wrap items-center gap-2">
-            {STATUS_FILTERS.map((item) => (
-              <FilterButton key={item} active={status === item} onClick={() => setStatus(item)}>
-                {item}
-              </FilterButton>
-            ))}
-            <span className="mx-1 h-6 w-px bg-line" />
-            {CATEGORIES.map((item) => (
-              <FilterButton key={item} active={category === item} onClick={() => setCategory(item)}>
-                {item}
-              </FilterButton>
-            ))}
-            {hasActiveFilters && (
-              <button
-                onClick={clearFilters}
-                className="ml-auto inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-medium text-mute transition hover:bg-ink hover:text-paper"
-              >
-                <X className="h-4 w-4" /> Reset
-              </button>
-            )}
+            <div className="mt-4 flex flex-wrap items-center gap-2">
+              {POOL_FILTERS.map(({ key, label }) => (
+                <FilterChip key={key} active={pool === key} onClick={() => setPool(key)}>
+                  {label}
+                </FilterChip>
+              ))}
+              <span className="mx-1 h-5 w-px bg-line" />
+              {STATUS_FILTERS.map((item) => (
+                <FilterChip key={item} active={status === item} onClick={() => setStatus(item)}>
+                  {item}
+                </FilterChip>
+              ))}
+              <span className="mx-1 h-5 w-px bg-line" />
+              {CATEGORIES.map((item) => (
+                <FilterChip key={item} active={category === item} onClick={() => setCategory(item)}>
+                  {item}
+                </FilterChip>
+              ))}
+              {hasActiveFilters && (
+                <button
+                  type="button"
+                  onClick={clearFilters}
+                  className="ml-auto inline-flex items-center gap-1 text-sm text-mute hover:text-paper"
+                >
+                  <X className="h-3.5 w-3.5" /> Reset
+                </button>
+              )}
+            </div>
           </div>
-        </div>
+        </Reveal>
 
         <div className="mt-8">
           {loading ? (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="h-[340px] animate-pulse rounded-2xl border border-line bg-ink-2" />
+                <div key={i} className="h-[320px] animate-pulse bg-ink-3" />
               ))}
             </div>
           ) : filtered.length === 0 ? (
             <EmptyState onClear={clearFilters} />
           ) : view === "grid" ? (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {filtered.map((credit) => <CreditCard key={credit.id} credit={credit} />)}
+              {filtered.map((credit, i) => (
+                <Reveal key={credit.id} delay={(i % 6) * 50}>
+                  <CreditCard credit={credit} />
+                </Reveal>
+              ))}
             </div>
           ) : (
-            <RegistryTable credits={filtered} />
+            <Reveal>
+              <RegistryTable credits={filtered} />
+            </Reveal>
           )}
         </div>
       </div>
@@ -195,28 +234,32 @@ export default function Registry() {
   )
 }
 
-function SummaryCard({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+function SummaryStat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-center gap-4 rounded-2xl border border-line bg-ink p-5 shadow-sm">
-      <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald/10 text-emerald-deep [&>svg]:h-5 [&>svg]:w-5">
-        {icon}
-      </span>
-      <div>
-        <p className="text-xs font-semibold uppercase tracking-wider text-mute">{label}</p>
-        <p className="mt-1 font-mono text-xl font-semibold text-paper">{value}</p>
-      </div>
+    <div className="surface p-5">
+      <p className="label">{label}</p>
+      <p className="mt-2 font-mono text-xl text-paper">{value}</p>
     </div>
   )
 }
 
-function FilterButton({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+function FilterChip({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean
+  onClick: () => void
+  children: React.ReactNode
+}) {
   return (
     <button
+      type="button"
       onClick={onClick}
-      className={`rounded-full border px-4 py-1.5 text-sm font-medium transition ${
+      className={`px-3 py-1 text-sm transition ${
         active
-          ? "border-emerald/40 bg-emerald/10 text-emerald-deep"
-          : "border-line bg-ink text-mute hover:border-line-2 hover:text-paper"
+          ? "bg-paper text-ink"
+          : "text-mute hover:bg-ink-3 hover:text-paper"
       }`}
     >
       {children}
@@ -226,35 +269,41 @@ function FilterButton({ active, onClick, children }: { active: boolean; onClick:
 
 function RegistryTable({ credits }: { credits: Credit[] }) {
   return (
-    <div className="thin-scroll overflow-x-auto rounded-2xl border border-line bg-ink shadow-sm">
+    <div className="thin-scroll overflow-x-auto border border-line">
       <table className="w-full min-w-[900px] border-collapse text-sm">
-        <thead className="bg-ink-2 text-left text-xs font-semibold uppercase tracking-wider text-mute">
+        <thead className="bg-ink-2 text-left text-xs uppercase tracking-wider text-mute">
           <tr>
-            <th className="px-6 py-5">Credit ID</th>
-            <th className="px-6 py-5">Project</th>
-            <th className="px-6 py-5">Category</th>
-            <th className="px-6 py-5">Country</th>
-            <th className="px-6 py-5 text-right">Vintage</th>
-            <th className="px-6 py-5 text-right">Volume</th>
-            <th className="px-6 py-5">Owner</th>
-            <th className="px-6 py-5">Status</th>
+            <th className="px-5 py-4 font-medium">ID</th>
+            <th className="px-5 py-4 font-medium">Project</th>
+            <th className="px-5 py-4 font-medium">Pool</th>
+            <th className="px-5 py-4 font-medium">Category</th>
+            <th className="px-5 py-4 font-medium">Country</th>
+            <th className="px-5 py-4 text-right font-medium">Vintage</th>
+            <th className="px-5 py-4 text-right font-medium">Volume</th>
+            <th className="px-5 py-4 font-medium">Owner</th>
+            <th className="px-5 py-4 font-medium">Status</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-line">
           {credits.map((credit) => (
-            <tr key={credit.id} className="transition hover:bg-emerald/5">
-              <td className="px-6 py-4 font-mono text-mute">#{credit.id.toString().padStart(4, "0")}</td>
-              <td className="px-6 py-4">
-                <Link to={`/credit/${credit.id}`} className="font-semibold text-paper transition hover:text-emerald-deep">
+            <tr key={credit.id} className="transition hover:bg-ink-2">
+              <td className="px-5 py-3.5 font-mono text-mute">
+                #{credit.id.toString().padStart(4, "0")}
+              </td>
+              <td className="px-5 py-3.5">
+                <Link to={`/credit/${credit.id}`} className="font-medium text-paper hover:text-emerald-deep">
                   {credit.project}
                 </Link>
               </td>
-              <td className="px-6 py-4 text-mute">{categoryOf(credit.project)}</td>
-              <td className="px-6 py-4 text-mute">{credit.country}</td>
-              <td className="px-6 py-4 text-right font-mono text-paper">{credit.vintage_year}</td>
-              <td className="px-6 py-4 text-right font-mono font-semibold text-paper">{formatNumber(volumeOf(credit))}</td>
-              <td className="px-6 py-4 font-mono text-mute">{shortAddress(credit.owner)}</td>
-              <td className="px-6 py-4"><StatusPill credit={credit} /></td>
+              <td className="px-5 py-3.5 font-mono text-xs text-mute">
+                {poolForCredit(credit) === "carbon" ? "eCO₂" : poolForCredit(credit) === "bio" ? "eBIO" : "eGBND"}
+              </td>
+              <td className="px-5 py-3.5 text-mute">{categoryOf(credit.project)}</td>
+              <td className="px-5 py-3.5 text-mute">{credit.country}</td>
+              <td className="px-5 py-3.5 text-right font-mono">{credit.vintage_year}</td>
+              <td className="px-5 py-3.5 text-right font-mono">{formatNumber(volumeOf(credit))}</td>
+              <td className="px-5 py-3.5 font-mono text-mute">{shortAddress(credit.owner)}</td>
+              <td className="px-5 py-3.5"><StatusPill credit={credit} /></td>
             </tr>
           ))}
         </tbody>
@@ -265,14 +314,11 @@ function RegistryTable({ credits }: { credits: Credit[] }) {
 
 function EmptyState({ onClear }: { onClear: () => void }) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-line bg-ink-2 py-28 text-center">
-      <Search className="h-10 w-10 text-mute" />
-      <h3 className="mt-5 text-xl font-bold text-paper">No records found</h3>
-      <p className="mt-2 max-w-sm text-mute">
-        Adjust your search or remove filters to expand the registry scope.
-      </p>
-      <button onClick={onClear} className="mt-7 rounded-lg bg-emerald px-5 py-3 font-semibold text-white hover:bg-emerald-deep">
-        Reset Filters
+    <div className="flex flex-col items-center border border-dashed border-line py-24 text-center">
+      <p className="font-serif text-xl text-paper">No records match</p>
+      <p className="mt-2 max-w-sm text-sm text-mute">Adjust filters or search terms to broaden the registry scope.</p>
+      <button type="button" onClick={onClear} className="mt-6 bg-emerald px-5 py-2.5 text-sm font-medium text-white hover:bg-emerald-deep">
+        Reset filters
       </button>
     </div>
   )

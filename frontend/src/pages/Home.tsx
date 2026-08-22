@@ -1,377 +1,246 @@
-import { Link } from 'react-router-dom'
-import { usePageTitle } from '../hooks'
+import { Link } from "react-router-dom";
+import { usePageTitle, useCountUp } from "../hooks";
+import Reveal from "../components/Reveal";
+import PoolCard from "../components/PoolCard";
+import { POOLS } from "../pools";
+import { formatCompact } from "../api";
+
+const PILLARS = [
+  {
+    num: "01",
+    title: "Verified provenance",
+    body: "Every tonne is cryptographically anchored. Vintage, methodology, and ownership are auditable — eliminating double-counting across voluntary markets.",
+  },
+  {
+    num: "02",
+    title: "Tokenised settlement",
+    body: "Carbon credits, biodiversity units, and sovereign green bonds settle on a single registry. Corporates and governments transact without opaque intermediaries.",
+  },
+  {
+    num: "03",
+    title: "Institutional rails",
+    body: "Built for treasury desks and project developers alike — issuance, transfer, and retirement execute in seconds, not weeks of manual review.",
+  },
+];
 
 export default function Home() {
-  usePageTitle("")
+  usePageTitle("");
+  const totalSupply = POOLS.reduce((s, p) => s + p.totalSupply, 0);
+  const { value: supplyCount } = useCountUp(totalSupply, 1800);
+
   return (
-    <>
-      <style>{`
-        /* ── NAVBAR OVERRIDES ── */
-        /* Forces your existing navbar to become transparent with white text */
-        nav, header, [class*="nav"], [class*="header"] {
-          background-color: transparent !important;
-          border-bottom: none !important;
-          position: absolute !important;
-          top: 0;
-          left: 0;
-          width: 100%;
-          z-index: 100;
-          box-shadow: none !important;
-        }
-        nav a, header a, nav span, header span, nav p, header p {
-          color: #ffffff !important;
-        }
-        nav button, header button {
-          color: #ffffff !important;
-          border-color: rgba(255, 255, 255, 0.4) !important;
-        }
+    <div className="bg-ink">
+      {/* Hero */}
+      <section className="relative flex min-h-screen flex-col justify-end overflow-hidden">
+        <video
+          src="/combined-shot.mp4"
+          autoPlay
+          muted
+          loop
+          playsInline
+          className="animate-slow-zoom absolute inset-0 h-full w-full object-cover"
+          aria-label="Aerial view of forest landscape"
+          preload="true"
+        />
+        <div className="bg-linear-to-t from-black to-transparent absolute inset-0" />
 
-        /* ── LAYOUT ── */
-        .h-wrap {
-          width: 100%;
-          font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-        }
-
-        /* ── HERO (True Full Screen 100vh) ── */
-        .h-hero {
-          position: relative;
-          width: 100%;
-          height: 100vh; /* Exactly 100% of the viewport height */
-          min-height: 600px;
-          overflow: hidden;
-          background: #000;
-        }
-
-        .h-hero__video {
-          position: absolute;
-          inset: 0;
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-          object-position: center;
-        }
-
-        /* Smooth gradient overlay to make the white text pop */
-        .h-hero__overlay {
-          position: absolute;
-          inset: 0;
-          background: linear-gradient(
-            to right,
-            rgba(0,0,0,0.85) 0%,
-            rgba(0,0,0,0.4) 50%,
-            rgba(0,0,0,0.1) 100%
-          );
-        }
-
-        /* Vertically centered content */
-        .h-hero__content {
-          position: absolute;
-          top: 50%;
-          left: 5%;
-          transform: translateY(-50%);
-          z-index: 10;
-          max-width: 900px;
-        }
-
-        /* Verra-style heavy typography matching your screenshot */
-        .h-hero__title {
-          font-size: clamp(42px, 5.5vw, 84px);
-          font-weight: 900;
-          color: #ffffff;
-          line-height: 1.1;
-          letter-spacing: 0.02em;
-          margin: 0 0 3rem;
-          text-shadow: 0 4px 24px rgba(0,0,0,0.5);
-          text-transform: uppercase;
-        }
-
-        /* Verra-style solid white button */
-        .h-hero__btn {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          background: #ffffff;
-          color: #000000;
-          font-weight: 800;
-          font-size: 15px;
-          letter-spacing: 0.1em;
-          text-transform: uppercase;
-          padding: 20px 40px;
-          text-decoration: none;
-          transition: all 0.2s ease;
-          box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-        }
-
-        .h-hero__btn:hover {
-          background: #e5e5e5;
-          transform: translateY(-2px);
-        }
-
-        /* Scroll Down Arrow Indicator */
-        .h-scroll {
-          position: absolute;
-          bottom: 2.5rem;
-          left: 50%;
-          transform: translateX(-50%);
-          z-index: 10;
-          width: 50px;
-          height: 50px;
-          border-radius: 50%;
-          background: rgba(0,0,0,0.4);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          transition: background 0.2s;
-          cursor: pointer;
-        }
-
-        .h-scroll:hover {
-          background: rgba(0,0,0,0.7);
-        }
-
-        /* ── SECTIONS BELOW HERO ── */
-        .h-section {
-          padding: 6rem 5%;
-          background: #ffffff;
-        }
-
-        .h-section__eyebrow {
-          font-size: 11px;
-          font-weight: 700;
-          color: #16a34a;
-          text-transform: uppercase;
-          letter-spacing: 0.16em;
-          margin-bottom: 1rem;
-        }
-
-        .h-section__title {
-          font-size: clamp(28px, 3vw, 42px);
-          font-weight: 300;
-          color: #111;
-          line-height: 1.2;
-          max-width: 600px;
-          margin: 0 0 4rem;
-        }
-
-        .h-cards {
-          display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: 2rem;
-        }
-
-        .h-card {
-          border-top: 1px solid rgba(0,0,0,0.1);
-          padding-top: 2rem;
-        }
-
-        .h-card__icon {
-          width: 48px;
-          height: 48px;
-          background: rgba(34,197,94,0.1);
-          border-radius: 12px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          margin-bottom: 1.5rem;
-        }
-
-        .h-card__title {
-          font-size: 18px;
-          font-weight: 600;
-          color: #111;
-          margin-bottom: 1rem;
-        }
-
-        .h-card__body {
-          font-size: 15px;
-          color: #555;
-          line-height: 1.7;
-        }
-
-        /* DRONE SPLIT SECTION */
-        .h-split {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          min-height: 500px;
-        }
-
-        .h-split__img {
-          position: relative;
-          overflow: hidden;
-        }
-
-        .h-split__img img {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-        }
-
-        .h-split__body {
-          background: #0d1a0e;
-          padding: 6rem 5%;
-          display: flex;
-          flex-direction: column;
-          justify-content: center;
-        }
-
-        .h-split__eyebrow {
-          font-size: 11px;
-          font-weight: 600;
-          color: #4ade80;
-          text-transform: uppercase;
-          letter-spacing: 0.16em;
-          margin-bottom: 1rem;
-        }
-
-        .h-split__title {
-          font-size: clamp(28px, 3vw, 42px);
-          font-weight: 300;
-          color: #f0faf0;
-          line-height: 1.2;
-          margin: 0 0 1.5rem;
-        }
-
-        .h-split__title strong {
-          font-weight: 700;
-        }
-
-        .h-split__body p {
-          font-size: 16px;
-          color: rgba(255,255,255,0.6);
-          line-height: 1.7;
-          margin: 0 0 2.5rem;
-          max-width: 480px;
-        }
-
-        .h-split__cta {
-          display: inline-flex;
-          align-items: center;
-          gap: 12px;
-          font-size: 14px;
-          font-weight: 600;
-          color: #0a0f0a;
-          background: #22c55e;
-          padding: 14px 28px;
-          text-decoration: none;
-          width: fit-content;
-          transition: background 0.15s;
-        }
-
-        .h-split__cta:hover {
-          background: #16a34a;
-        }
-
-        /* RESPONSIVE */
-        @media (max-width: 900px) {
-          .h-hero__content { left: 5%; }
-          .h-cards { grid-template-columns: 1fr; }
-          .h-split { grid-template-columns: 1fr; }
-          .h-split__img { height: 300px; }
-          .h-section { padding: 4rem 5%; }
-        }
-      `}</style>
-
-      <div className="h-wrap">
-
-        {/* ── HERO ── */}
-        <div className="h-hero">
-          <video
-            src="/combined-shot.mp4"
-            autoPlay
-            muted
-            loop
-            playsInline
-            className="h-hero__video"
-            aria-label="Aerial drone view of forest landscape"
-          />
-          
-          <div className="h-hero__overlay" />
-
-          <div className="h-hero__content">
-            <h2 className="h-hero__title">
-              Endeavour sets the worlds<br />
-              climate .<br />
-            </h2>
-            <h3 className="h-hero__title" style={{ fontSize: '12px', lineHeight: '1.4', marginBottom: '1rem' }}>
-              <br />
-              Immutable Chain
-            </h3>
-            
-            <Link to="/registry" className="h-hero__btn">
-              Explore Registry
-            </Link>
-          </div>
-
-          <div className="h-scroll" aria-hidden="true" onClick={() => window.scrollTo({ top: window.innerHeight, behavior: 'smooth' })}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M6 9l6 6 6-6" />
-            </svg>
-          </div>
+        <div className="relative z-10 mx-auto w-full max-w-7xl px-5 pb-28 pt-32 lg:px-8">
+          <Reveal>
+            <p className="eyebrow text-emerald-bright/90">
+              Climate token infrastructure
+            </p>
+          </Reveal>
+          <Reveal delay={100}>
+            <h1 className="font-serif mt-5 max-w-4xl text-[clamp(2.25rem,5vw,4.25rem)] leading-[1.08] text-white">
+              Carbon credits, biodiversity pools &amp; green bonds — one
+              registry.
+            </h1>
+          </Reveal>
+          <Reveal delay={200}>
+            <p className="mt-6 max-w-xl text-lg text-white/75">
+              Endeavour tokenises environmental assets for companies,
+              governments, and project developers who need transparent, on-chain
+              settlement.
+            </p>
+          </Reveal>
+          <Reveal delay={300}>
+            <div className="mt-10 flex flex-wrap gap-4">
+              <Link
+                to="/registry"
+                className="inline-flex items-center bg-white px-7 py-3.5 text-sm font-semibold text-paper transition hover:bg-ink-2"
+              >
+                Explore registry
+              </Link>
+              <Link
+                style={{
+                  color: "white",
+                }}
+                to="/analytics"
+                className="inline-flex items-center border border-white/30 px-7 py-3.5 text-sm font-medium text-white transition hover:border-white/60"
+              >
+                View analytics
+              </Link>
+            </div>
+          </Reveal>
         </div>
 
-        {/* ── WHY ENDEAVOUR ── */}
-        <div className="h-section">
-          <p className="h-section__eyebrow">Why Endeavour</p>
-          <h2 className="h-section__title">
-            Institutional climate infrastructure for a transparent market
-          </h2>
-          <div className="h-cards">
-            {[
-              {
-                icon: '🔒',
-                title: 'Immutable Truth',
-                body: 'Every carbon tonne is cryptographically verified on-chain. Provenance, vintage, and ownership are public — preventing double-spending and fraud.',
-              },
-              {
-                icon: '⚡',
-                title: 'On-Chain Automation',
-                body: 'Smart contracts handle issuance, transfers, and retirements instantly — replacing weeks of manual PDF reviews with milliseconds of code execution.',
-              },
-              {
-                icon: '🌐',
-                title: 'Global Settlement',
-                body: 'A borderless layer for climate finance. Corporate buyers and project developers transact directly without rent-seeking intermediaries.',
-              },
-            ].map((card) => (
-              <div key={card.title} className="h-card">
-                <div className="h-card__icon">
-                  <span style={{ fontSize: '20px' }}>{card.icon}</span>
-                </div>
-                <div className="h-card__title">{card.title}</div>
-                <div className="h-card__body">{card.body}</div>
-              </div>
+        <button
+          type="button"
+          aria-label="Scroll to content"
+          onClick={() =>
+            window.scrollTo({ top: window.innerHeight, behavior: "smooth" })
+          }
+          className="absolute bottom-8 left-1/2 z-10 -translate-x-1/2 border border-white/20 p-2 text-white/60 transition hover:border-white/40 hover:text-white"
+        >
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
+            <path d="M6 9l6 6 6-6" />
+          </svg>
+        </button>
+      </section>
+
+      {/* Live stats strip */}
+      <div className="stat-strip">
+        <div className="mx-auto grid max-w-7xl grid-cols-2 divide-x divide-line md:grid-cols-4">
+          {[
+            {
+              label: "Tokenised supply",
+              value: formatCompact(supplyCount),
+              unit: "units",
+            },
+            { label: "Asset pools", value: "3", unit: "live" },
+            { label: "Jurisdictions", value: "12+", unit: "" },
+            { label: "Settlement", value: "<2s", unit: "avg" },
+          ].map((stat, i) => (
+            <Reveal
+              key={stat.label}
+              delay={i * 60}
+              className="px-6 py-6 text-center md:py-8"
+            >
+              <p className="label">{stat.label}</p>
+              <p className="mt-1 font-mono text-2xl text-paper">
+                {stat.value}
+                {stat.unit && (
+                  <span className="ml-1 text-sm text-mute">{stat.unit}</span>
+                )}
+              </p>
+            </Reveal>
+          ))}
+        </div>
+      </div>
+
+      {/* Token pools */}
+      <section className="mx-auto max-w-7xl px-5 py-20 lg:px-8">
+        <Reveal>
+          <SectionIntro
+            eyebrow="Token pools"
+            title="Three asset classes, one settlement layer"
+            intro="CarbonPool aggregates verified credits. BioPool tracks biodiversity outcomes. Green Bond Vault holds tokenised sovereign instruments."
+          />
+        </Reveal>
+        <div className="mt-12 grid gap-6 lg:grid-cols-3">
+          {POOLS.map((pool, i) => (
+            <Reveal key={pool.id} delay={i * 100}>
+              <PoolCard pool={pool} />
+            </Reveal>
+          ))}
+        </div>
+      </section>
+
+      {/* Pillars */}
+      <section className="border-t border-line bg-ink-2 py-20">
+        <div className="mx-auto max-w-7xl px-5 lg:px-8">
+          <Reveal>
+            <SectionIntro
+              eyebrow="Why Endeavour"
+              title="Infrastructure for a transparent climate market"
+            />
+          </Reveal>
+          <div className="mt-14 grid gap-px bg-line md:grid-cols-3">
+            {PILLARS.map((p, i) => (
+              <Reveal key={p.num} delay={i * 80}>
+                <article className="bg-ink-2 p-8 md:p-10">
+                  <span className="font-mono text-sm text-emerald-deep">
+                    {p.num}
+                  </span>
+                  <h3 className="font-serif mt-4 text-xl text-paper">
+                    {p.title}
+                  </h3>
+                  <p className="mt-3 text-sm leading-relaxed text-mute">
+                    {p.body}
+                  </p>
+                </article>
+              </Reveal>
             ))}
           </div>
         </div>
+      </section>
 
-        {/* ── DRONE SPLIT SECTION ── */}
-        <div className="h-split">
-          <div className="h-split__img">
-            <img
-              src="https://images.unsplash.com/photo-1542401886-65d6c61db217?w=900&q=80"
-              alt="Aerial view of forest canopy"
-            />
-          </div>
-          <div className="h-split__body">
-            <p className="h-split__eyebrow">Carbon Registry</p>
-            <h2 className="h-split__title">
-              <strong>Every credit.</strong><br />
-              Every tonne.<br />
-              On-chain forever.
-            </h2>
-            <p>
-              Endeavour's registry bridges real-world verified carbon projects to the blockchain — giving buyers full transparency into project origin, methodology, and retirement status.
-            </p>
-            <Link to="/registry" className="h-split__cta">
-              Explore Registry
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M5 12h14M12 5l7 7-7 7" />
-              </svg>
+      {/* Split CTA */}
+      <section className="grid min-h-[420px] lg:grid-cols-2">
+        <div className="relative overflow-hidden">
+          <img
+            src="/new.jpg"
+            alt="Forest canopy from above"
+            className="h-full w-full object-cover"
+            loading="eager"
+          />
+        </div>
+        <Reveal className="flex flex-col justify-center bg-paper px-8 py-16 lg:px-14">
+          <p className="eyebrow text-emerald-bright">For institutions</p>
+          <h2 className="font-serif mt-4 text-3xl text-ink lg:text-4xl">
+            Issue, hold, or retire — on your terms.
+          </h2>
+          <p className="mt-4 max-w-md text-ink/70">
+            Whether you&apos;re a corporate buyer sourcing verified offsets or a
+            sovereign issuer tokenising green bonds, Endeavour provides the
+            rails.
+          </p>
+          <div className="mt-8 flex flex-wrap gap-4">
+            <Link
+              to="/create"
+              className="bg-emerald px-6 py-3 text-sm font-semibold text-white transition hover:bg-emerald-deep"
+            >
+              Issue credits
+            </Link>
+            <Link
+              style={{
+                color: "white",
+              }}
+              to="/manage"
+              className="border border-ink/20 px-6 py-3 text-sm font-medium text-ink transition hover:border-ink/40"
+            >
+              Manage portfolio
             </Link>
           </div>
-        </div>
+        </Reveal>
+      </section>
+    </div>
+  );
+}
 
-      </div>
-    </>
-  )
+function SectionIntro({
+  eyebrow,
+  title,
+  intro,
+}: {
+  eyebrow: string;
+  title: string;
+  intro?: string;
+}) {
+  return (
+    <div className="max-w-2xl">
+      <p className="eyebrow text-emerald-deep">{eyebrow}</p>
+      <h2 className="font-serif mt-3 text-3xl text-paper sm:text-4xl">
+        {title}
+      </h2>
+      {intro && <p className="mt-4 text-mute">{intro}</p>}
+    </div>
+  );
 }
