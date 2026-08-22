@@ -13,10 +13,10 @@ export default function PageHeader({
   children?: ReactNode
 }) {
   return (
-    <header className="border-b border-line bg-ink-2">
-      <div className="grid-bg absolute" />
+    <header className="relative overflow-hidden border-b border-line bg-ink-2">
+      <div className="grid-bg absolute inset-0 opacity-70" />
       <div className="mx-auto max-w-7xl px-5 pb-12 pt-28 lg:px-8">
-        <p className="eyebrow text-emerald-bright">{eyebrow}</p>
+        <p className="eyebrow text-emerald-deep">{eyebrow}</p>
         <div className="mt-3 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-2xl">
             <h1 className="text-4xl font-bold text-paper sm:text-5xl">

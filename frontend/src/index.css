@@ -3,20 +3,21 @@
 /*
   ENDEAVOUR — Design System
   Institutional climate-finance infrastructure.
-  Deep navy base, emerald green accents, editorial typography.
+  White/off-white surfaces, preserved Endeavour emerald accents,
+  editorial typography.
 */
 
 :root {
   /* Brand palette */
-  --color-ink: #07111f; /* deep navy base */
-  --color-ink-2: #0b1729; /* raised navy surface */
-  --color-ink-3: #101f33; /* elevated panel */
-  --color-line: #1b2c43; /* hairline borders */
-  --color-line-2: #243a56;
+  --color-ink: #ffffff;
+  --color-ink-2: #f7f8f5;
+  --color-ink-3: #eef2ec;
+  --color-line: #dce4dc;
+  --color-line-2: #c3d0c4;
 
-  --color-paper: #f4f6f8; /* off-white text */
-  --color-mute: #8aa0b8; /* soft gray text */
-  --color-mute-2: #62788f;
+  --color-paper: #102017;
+  --color-mute: #5f6f65;
+  --color-mute-2: #819187;
 
   --color-emerald: #10b981;
   --color-emerald-bright: #34d399;
@@ -30,7 +31,7 @@
 }
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 * {
@@ -47,12 +48,14 @@ html {
 
 body {
   margin: 0;
-  background-color: var(--color-ink);
+  background:
+    radial-gradient(circle at top left, rgba(16, 185, 129, 0.08), transparent 32rem),
+    var(--color-ink);
   color: var(--color-paper);
   font-family: var(--font-sans);
   font-size: 16px;
   line-height: 1.6;
-  letter-spacing: -0.011em;
+  letter-spacing: 0;
 }
 
 /* Reset the legacy element styles that shipped with the starter */
@@ -72,11 +75,33 @@ textarea {
   font-family: inherit;
 }
 
+.input {
+  width: 100%;
+  border-radius: 0.75rem;
+  border: 1px solid var(--color-line);
+  background: #fff;
+  padding: 0.875rem 1rem;
+  color: var(--color-paper);
+  outline: none;
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.input::placeholder {
+  color: var(--color-mute-2);
+}
+
+.input:focus {
+  border-color: rgba(16, 185, 129, 0.55);
+  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.12);
+}
+
 h1,
 h2,
 h3,
 h4 {
-  letter-spacing: -0.03em;
+  letter-spacing: 0;
   line-height: 1.05;
   text-wrap: balance;
 }
@@ -93,7 +118,7 @@ h4 {
 .grid-bg {
   background-image: radial-gradient(
     circle at 1px 1px,
-    rgba(138, 160, 184, 0.09) 1px,
+    rgba(4, 120, 87, 0.1) 1px,
     transparent 0
   );
   background-size: 32px 32px;
@@ -103,11 +128,24 @@ h4 {
 .hero-veil {
   background: linear-gradient(
     180deg,
-    rgba(7, 17, 31, 0.55) 0%,
-    rgba(7, 17, 31, 0.35) 35%,
-    rgba(7, 17, 31, 0.75) 78%,
-    rgba(7, 17, 31, 1) 100%
+    rgba(5, 17, 13, 0.58) 0%,
+    rgba(5, 17, 13, 0.25) 35%,
+    rgba(5, 17, 13, 0.74) 78%,
+    rgba(255, 255, 255, 1) 100%
   );
+}
+
+@keyframes endv-slow-zoom {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.08);
+  }
+}
+
+.animate-slow-zoom {
+  animation: endv-slow-zoom 18s ease-in-out infinite alternate;
 }
 
 /* Reveal-on-scroll animation */

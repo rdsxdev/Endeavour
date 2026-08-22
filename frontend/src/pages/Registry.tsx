@@ -1,51 +1,27 @@
 import { useMemo, useState } from "react"
 import { Link } from "react-router-dom"
-import { Search, SlidersHorizontal, LayoutGrid, List, X } from "lucide-react"
+import {
+  Activity,
+  Globe2,
+  Layers,
+  LayoutGrid,
+  List,
+  Search,
+  SlidersHorizontal,
+  X,
+} from "lucide-react"
 import { useCredits } from "../hooks"
 import {
   creditStatus,
+  formatCompact,
   formatNumber,
   shortAddress,
   type Credit,
 } from "../api"
 import { categoryOf, volumeOf, type Category } from "../stats"
 import CreditCard from "../components/CreditCard"
-// Local fallback PageHeader to avoid missing module during build
-function PageHeader({
-  eyebrow,
-  title,
-  intro,
-  children,
-}: {
-  eyebrow?: string
-  title: string
-  intro?: string
-  children?: React.ReactNode
-}) {
-  return (
-    <header className="mx-auto max-w-7xl px-5 pt-10 lg:px-8">
-      {eyebrow && <p className="text-sm text-mute">{eyebrow}</p>}
-      <h1 className="mt-2 text-3xl font-semibold text-paper">{title}</h1>
-      {intro && <p className="mt-2 text-sm text-mute max-w-3xl">{intro}</p>}
-      {children}
-    </header>
-  )
-}
-
-function StatusPill({ credit }: { credit: Credit }) {
-  const status = creditStatus(credit)
-  const statusStyles = {
-    Verified: "bg-emerald/10 text-emerald-bright border border-emerald/20",
-    Retired: "bg-slate/900 text-mute border border-line",
-    Pending: "bg-amber/10 text-amber-300 border border-amber/20",
-  }
-
-  return (
-    <span className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${statusStyles[status] ?? "bg-ink-2 text-mute border border-line"}`}>
-      {status}
-    </span>
-  )
-}
+import PageHeader from "../components/PageHeader"
+import { StatusPill } from "../components/ui"
 
 type StatusFilter = "All" | "Verified" | "Retired" | "Pending"
 type SortKey = "newest" | "oldest" | "vintage" | "volume"
@@ -61,251 +37,223 @@ const CATEGORIES: (Category | "All")[] = [
 ]
 
 export default function Registry() {
-  const { credits, loading, live } = useCredits() as {
-    credits: Credit[]
-    loading: boolean
-    live?: boolean
-  }
-
+  const { credits, loading, live } = useCredits()
   const [query, setQuery] = useState("")
   const [status, setStatus] = useState<StatusFilter>("All")
   const [category, setCategory] = useState<Category | "All">("All")
   const [sort, setSort] = useState<SortKey>("newest")
-  const [view, setView] = useState<"grid" | "table">("grid")
+  const [view, setView] = useState<"table" | "grid">("table")
 
   const filtered = useMemo(() => {
-    let list = credits.filter((c) => {
-      const q = query.trim().toLowerCase()
-      const matchQuery =
-        !q ||
-        c.project.toLowerCase().includes(q) ||
-        c.country.toLowerCase().includes(q) ||
-        c.id.toString() === q
-      const matchStatus = status === "All" || creditStatus(c) === status
-      const matchCategory =
-        category === "All" || categoryOf(c.project) === category
-      return matchQuery && matchStatus && matchCategory
-    })
-
-    list = [...list].sort((a, b) => {
-      switch (sort) {
-        case "newest":
-          return b.created_at - a.created_at
-        case "oldest":
-          return a.created_at - b.created_at
-        case "vintage":
-          return b.vintage_year - a.vintage_year
-        case "volume":
-          return volumeOf(b) - volumeOf(a)
-      }
-    })
-    return list
+    const q = query.trim().toLowerCase()
+    return [...credits]
+      .filter((c) => {
+        const matchesQuery =
+          !q ||
+          c.project.toLowerCase().includes(q) ||
+          c.country.toLowerCase().includes(q) ||
+          c.id.toString() === q
+        return (
+          matchesQuery &&
+          (status === "All" || creditStatus(c) === status) &&
+          (category === "All" || categoryOf(c.project) === category)
+        )
+      })
+      .sort((a, b) => {
+        if (sort === "oldest") return a.created_at - b.created_at
+        if (sort === "vintage") return b.vintage_year - a.vintage_year
+        if (sort === "volume") return volumeOf(b) - volumeOf(a)
+        return b.created_at - a.created_at
+      })
   }, [credits, query, status, category, sort])
 
-  const hasActiveFilters =
-    query !== "" || status !== "All" || category !== "All"
+  const summary = useMemo(() => {
+    const volume = filtered.reduce((sum, c) => sum + volumeOf(c), 0)
+    const projects = new Set(filtered.map((c) => c.project)).size
+    const countries = new Set(filtered.map((c) => c.country)).size
+    return { volume, projects, countries }
+  }, [filtered])
 
-  function clearFilters() {
+  const hasActiveFilters = query !== "" || status !== "All" || category !== "All"
+  const clearFilters = () => {
     setQuery("")
     setStatus("All")
     setCategory("All")
   }
 
   return (
-    <>
+    <div className="min-h-screen bg-ink">
       <PageHeader
-        eyebrow="On-Chain Registry"
+        eyebrow="Verra-style Registry Explorer"
         title="Registry Explorer"
-        intro="Every carbon credit issued on Endeavour, searchable and independently auditable. Inspect provenance, ownership and retirement status in real time."
+        intro="Search every Endeavour credit by project, country, vintage, verification state and current ownership."
       >
-        <div className="flex items-center gap-2 rounded-lg border border-line bg-ink px-4 py-3">
-          <span
-            className={`pulse-dot h-2 w-2 rounded-full ${live ? "bg-emerald-bright" : "bg-amber-400"}`}
-          />
-          <span className="text-sm text-mute">
-            {live ? "Live chain data" : "Registry snapshot"}
+        <div className="inline-flex items-center gap-2 rounded-lg border border-line bg-ink px-4 py-2.5 shadow-sm">
+          <span className={`pulse-dot h-2 w-2 rounded-full ${live ? "bg-emerald" : "bg-amber-400"}`} />
+          <span className="text-sm font-medium text-mute">
+            {live ? "Live Endeavour data" : "Registry snapshot"}
           </span>
         </div>
       </PageHeader>
 
       <div className="mx-auto max-w-7xl px-5 py-10 lg:px-8">
-        {/* Toolbar */}
-        <div className="flex flex-col gap-4">
+        {!loading && (
+          <div className="mb-8 grid gap-4 md:grid-cols-3">
+            <SummaryCard icon={<Activity />} label="Filtered Volume" value={`${formatCompact(summary.volume)} tCO2e`} />
+            <SummaryCard icon={<Layers />} label="Projects Listed" value={formatNumber(summary.projects)} />
+            <SummaryCard icon={<Globe2 />} label="Countries" value={formatNumber(summary.countries)} />
+          </div>
+        )}
+
+        <div className="rounded-3xl border border-line bg-ink-2 p-4 shadow-sm">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
-            <div className="relative flex-1">
-              <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-mute" />
+            <label className="relative flex-1">
+              <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-mute" />
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search by project, country or credit ID…"
-                className="w-full rounded-lg border border-line bg-ink-2 py-3 pl-11 pr-4 text-paper outline-none transition-colors placeholder:text-mute focus:border-emerald/50"
+                placeholder="Search project, country, or credit ID"
+                className="w-full rounded-xl border border-line bg-ink py-3.5 pl-12 pr-4 text-paper outline-none transition placeholder:text-mute focus:border-emerald/50 focus:ring-4 focus:ring-emerald/10"
               />
-            </div>
-
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 rounded-lg border border-line bg-ink-2 px-3 py-2.5">
+            </label>
+            <div className="flex flex-wrap items-center gap-3">
+              <label className="flex items-center gap-2 rounded-xl border border-line bg-ink px-4 py-3">
                 <SlidersHorizontal className="h-4 w-4 text-mute" />
                 <select
                   value={sort}
                   onChange={(e) => setSort(e.target.value as SortKey)}
-                  className="bg-transparent text-sm text-paper outline-none"
+                  className="bg-transparent text-sm font-medium text-paper outline-none"
                 >
-                  <option value="newest" className="bg-ink-2">
-                    Newest first
-                  </option>
-                  <option value="oldest" className="bg-ink-2">
-                    Oldest first
-                  </option>
-                  <option value="vintage" className="bg-ink-2">
-                    Vintage (newest)
-                  </option>
-                  <option value="volume" className="bg-ink-2">
-                    Volume (high → low)
-                  </option>
+                  <option value="newest">Newest first</option>
+                  <option value="oldest">Oldest first</option>
+                  <option value="vintage">Vintage year</option>
+                  <option value="volume">Volume high to low</option>
                 </select>
-              </div>
-
-              <div className="flex overflow-hidden rounded-lg border border-line">
-                <button
-                  onClick={() => setView("grid")}
-                  aria-label="Grid view"
-                  className={`p-2.5 transition-colors ${view === "grid" ? "bg-emerald/15 text-emerald-bright" : "bg-ink-2 text-mute hover:text-paper"}`}
-                >
-                  <LayoutGrid className="h-4 w-4" />
-                </button>
+              </label>
+              <div className="flex overflow-hidden rounded-xl border border-line bg-ink">
                 <button
                   onClick={() => setView("table")}
                   aria-label="Table view"
-                  className={`p-2.5 transition-colors ${view === "table" ? "bg-emerald/15 text-emerald-bright" : "bg-ink-2 text-mute hover:text-paper"}`}
+                  className={`p-3 ${view === "table" ? "bg-emerald/10 text-emerald-deep" : "text-mute hover:text-paper"}`}
                 >
-                  <List className="h-4 w-4" />
+                  <List className="h-5 w-5" />
+                </button>
+                <button
+                  onClick={() => setView("grid")}
+                  aria-label="Card view"
+                  className={`p-3 ${view === "grid" ? "bg-emerald/10 text-emerald-deep" : "text-mute hover:text-paper"}`}
+                >
+                  <LayoutGrid className="h-5 w-5" />
                 </button>
               </div>
             </div>
           </div>
 
-          {/* Filter chips */}
-          <div className="flex flex-wrap items-center gap-2">
-            {STATUS_FILTERS.map((s) => (
-              <button
-                key={s}
-                onClick={() => setStatus(s)}
-                className={`rounded-full border px-3.5 py-1.5 text-sm transition-colors ${
-                  status === s
-                    ? "border-emerald/40 bg-emerald/15 text-emerald-bright"
-                    : "border-line bg-ink-2 text-mute hover:text-paper"
-                }`}
-              >
-                {s}
-              </button>
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            {STATUS_FILTERS.map((item) => (
+              <FilterButton key={item} active={status === item} onClick={() => setStatus(item)}>
+                {item}
+              </FilterButton>
             ))}
-            <span className="mx-1 h-5 w-px bg-line" />
-            {CATEGORIES.map((c) => (
-              <button
-                key={c}
-                onClick={() => setCategory(c)}
-                className={`rounded-full border px-3.5 py-1.5 text-sm transition-colors ${
-                  category === c
-                    ? "border-emerald/40 bg-emerald/15 text-emerald-bright"
-                    : "border-line bg-ink-2 text-mute hover:text-paper"
-                }`}
-              >
-                {c}
-              </button>
+            <span className="mx-1 h-6 w-px bg-line" />
+            {CATEGORIES.map((item) => (
+              <FilterButton key={item} active={category === item} onClick={() => setCategory(item)}>
+                {item}
+              </FilterButton>
             ))}
             {hasActiveFilters && (
               <button
                 onClick={clearFilters}
-                className="inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-sm text-mute hover:text-paper"
+                className="ml-auto inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-medium text-mute transition hover:bg-ink hover:text-paper"
               >
-                <X className="h-3.5 w-3.5" /> Clear
+                <X className="h-4 w-4" /> Reset
               </button>
             )}
           </div>
         </div>
 
-        {/* Result count */}
-        <p className="mt-6 text-sm text-mute">
-          {loading
-            ? "Loading registry…"
-            : `${formatNumber(filtered.length)} ${filtered.length === 1 ? "credit" : "credits"}`}
-        </p>
-
-        {/* Results */}
-        <div className="mt-5">
+        <div className="mt-8">
           {loading ? (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {Array.from({ length: 6 }).map((_, i) => (
-                <div
-                  key={i}
-                  className="h-80 animate-pulse rounded-2xl border border-line bg-ink-2"
-                />
+                <div key={i} className="h-[340px] animate-pulse rounded-2xl border border-line bg-ink-2" />
               ))}
             </div>
           ) : filtered.length === 0 ? (
             <EmptyState onClear={clearFilters} />
           ) : view === "grid" ? (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {filtered.map((c) => (
-                <CreditCard key={c.id} credit={c} />
-              ))}
+              {filtered.map((credit) => <CreditCard key={credit.id} credit={credit} />)}
             </div>
           ) : (
             <RegistryTable credits={filtered} />
           )}
         </div>
       </div>
-    </>
+    </div>
+  )
+}
+
+function SummaryCard({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+  return (
+    <div className="flex items-center gap-4 rounded-2xl border border-line bg-ink p-5 shadow-sm">
+      <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald/10 text-emerald-deep [&>svg]:h-5 [&>svg]:w-5">
+        {icon}
+      </span>
+      <div>
+        <p className="text-xs font-semibold uppercase tracking-wider text-mute">{label}</p>
+        <p className="mt-1 font-mono text-xl font-semibold text-paper">{value}</p>
+      </div>
+    </div>
+  )
+}
+
+function FilterButton({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`rounded-full border px-4 py-1.5 text-sm font-medium transition ${
+        active
+          ? "border-emerald/40 bg-emerald/10 text-emerald-deep"
+          : "border-line bg-ink text-mute hover:border-line-2 hover:text-paper"
+      }`}
+    >
+      {children}
+    </button>
   )
 }
 
 function RegistryTable({ credits }: { credits: Credit[] }) {
   return (
-    <div className="thin-scroll overflow-x-auto rounded-2xl border border-line">
-      <table className="w-full min-w-[820px] border-collapse text-sm">
-        <thead>
-          <tr className="border-b border-line bg-ink-2 text-left text-mute">
-            <th className="px-5 py-4 font-medium">ID</th>
-            <th className="px-5 py-4 font-medium">Project</th>
-            <th className="px-5 py-4 font-medium">Category</th>
-            <th className="px-5 py-4 font-medium">Country</th>
-            <th className="px-5 py-4 font-medium">Vintage</th>
-            <th className="px-5 py-4 font-medium">Volume</th>
-            <th className="px-5 py-4 font-medium">Owner</th>
-            <th className="px-5 py-4 font-medium">Status</th>
+    <div className="thin-scroll overflow-x-auto rounded-2xl border border-line bg-ink shadow-sm">
+      <table className="w-full min-w-[900px] border-collapse text-sm">
+        <thead className="bg-ink-2 text-left text-xs font-semibold uppercase tracking-wider text-mute">
+          <tr>
+            <th className="px-6 py-5">Credit ID</th>
+            <th className="px-6 py-5">Project</th>
+            <th className="px-6 py-5">Category</th>
+            <th className="px-6 py-5">Country</th>
+            <th className="px-6 py-5 text-right">Vintage</th>
+            <th className="px-6 py-5 text-right">Volume</th>
+            <th className="px-6 py-5">Owner</th>
+            <th className="px-6 py-5">Status</th>
           </tr>
         </thead>
-        <tbody>
-          {credits.map((c) => (
-            <tr
-              key={c.id}
-              className="border-b border-line/60 transition-colors last:border-0 hover:bg-ink-2"
-            >
-              <td className="px-5 py-4 font-mono text-mute">
-                #{c.id.toString().padStart(4, "0")}
-              </td>
-              <td className="px-5 py-4">
-                <Link
-                  to={`/credit/${c.id}`}
-                  className="font-medium text-paper hover:text-emerald-bright"
-                >
-                  {c.project}
+        <tbody className="divide-y divide-line">
+          {credits.map((credit) => (
+            <tr key={credit.id} className="transition hover:bg-emerald/5">
+              <td className="px-6 py-4 font-mono text-mute">#{credit.id.toString().padStart(4, "0")}</td>
+              <td className="px-6 py-4">
+                <Link to={`/credit/${credit.id}`} className="font-semibold text-paper transition hover:text-emerald-deep">
+                  {credit.project}
                 </Link>
               </td>
-              <td className="px-5 py-4 text-mute">{categoryOf(c.project)}</td>
-              <td className="px-5 py-4 text-mute">{c.country}</td>
-              <td className="px-5 py-4 font-mono text-paper">
-                {c.vintage_year}
-              </td>
-              <td className="px-5 py-4 font-mono text-paper">
-                {formatNumber(volumeOf(c))}
-              </td>
-              <td className="px-5 py-4 font-mono text-mute">
-                {shortAddress(c.owner)}
-              </td>
-              <td className="px-5 py-4">
-                <StatusPill credit={c} />
-              </td>
+              <td className="px-6 py-4 text-mute">{categoryOf(credit.project)}</td>
+              <td className="px-6 py-4 text-mute">{credit.country}</td>
+              <td className="px-6 py-4 text-right font-mono text-paper">{credit.vintage_year}</td>
+              <td className="px-6 py-4 text-right font-mono font-semibold text-paper">{formatNumber(volumeOf(credit))}</td>
+              <td className="px-6 py-4 font-mono text-mute">{shortAddress(credit.owner)}</td>
+              <td className="px-6 py-4"><StatusPill credit={credit} /></td>
             </tr>
           ))}
         </tbody>
@@ -316,20 +264,14 @@ function RegistryTable({ credits }: { credits: Credit[] }) {
 
 function EmptyState({ onClear }: { onClear: () => void }) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-line bg-ink-2 py-20 text-center">
-      <Search className="h-8 w-8 text-mute" />
-      <h3 className="mt-4 text-lg font-semibold text-paper">
-        No matching credits
-      </h3>
-      <p className="mt-1 max-w-sm text-sm text-mute">
-        Try adjusting your search or filters to find what you&apos;re looking
-        for.
+    <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-line bg-ink-2 py-28 text-center">
+      <Search className="h-10 w-10 text-mute" />
+      <h3 className="mt-5 text-xl font-bold text-paper">No records found</h3>
+      <p className="mt-2 max-w-sm text-mute">
+        Adjust your search or remove filters to expand the registry scope.
       </p>
-      <button
-        onClick={onClear}
-        className="mt-5 rounded-lg border border-line-2 px-4 py-2 text-sm text-paper hover:bg-ink-3"
-      >
-        Clear filters
+      <button onClick={onClear} className="mt-7 rounded-lg bg-emerald px-5 py-3 font-semibold text-white hover:bg-emerald-deep">
+        Reset Filters
       </button>
     </div>
   )

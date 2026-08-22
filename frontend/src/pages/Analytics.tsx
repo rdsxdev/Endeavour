@@ -10,7 +10,7 @@ import {
   Flame,
   ArrowUpRight,
 } from "lucide-react"
-import { useCredits } from "../hooks"
+import { useCredits, useHealth } from "../hooks"
 import { computeStats, categoryOf, volumeOf } from "../stats"
 import {
   formatNumber,
@@ -22,16 +22,10 @@ import {
 import PageHeader from "../components/PageHeader.tsx"
 import { Panel } from "../components/ui.tsx"
 
-type BlockchainHealth = {
-  blockchain_connected?: boolean
-  latest_block?: number
-}
-
 export default function Analytics() {
   const { credits: rawCredits, loading } = useCredits()
+  const { health, live } = useHealth()
   const credits = (rawCredits ?? []) as Credit[]
-  const live = false
-  const health: BlockchainHealth = {}
   const stats = useMemo(() => computeStats(credits), [credits])
 
   const byCategory = useMemo(() => {
@@ -81,7 +75,7 @@ export default function Analytics() {
       >
         <div className="flex items-center gap-2 rounded-lg border border-line bg-ink px-4 py-3">
           <span
-            className={`pulse-dot h-2 w-2 rounded-full ${live ? "bg-emerald-bright" : "bg-amber-400"}`}
+            className={`pulse-dot h-2 w-2 rounded-full ${live ? "bg-emerald" : "bg-amber-400"}`}
           />
           <span className="text-sm text-mute">
             {live ? "Live chain data" : "Registry snapshot"}
@@ -312,10 +306,10 @@ function Kpi({
 }) {
   return (
     <div
-      className={`rounded-2xl border p-5 ${accent ? "border-emerald/30 bg-emerald/5" : "border-line bg-ink-2"}`}
+      className={`rounded-2xl border p-5 shadow-sm ${accent ? "border-emerald/30 bg-emerald/5" : "border-line bg-ink"}`}
     >
       <div
-        className={`flex h-10 w-10 items-center justify-center rounded-lg ${accent ? "bg-emerald/15 text-emerald-bright" : "bg-ink-3 text-mute"}`}
+        className={`flex h-10 w-10 items-center justify-center rounded-lg ${accent ? "bg-emerald/15 text-emerald-deep" : "bg-ink-3 text-mute"}`}
       >
         {icon}
       </div>
@@ -375,7 +369,7 @@ function StatusRow({
       <dt className="text-mute">{label}</dt>
       <dd className="flex items-center gap-2 text-paper">
         <span
-          className={`pulse-dot h-2 w-2 rounded-full ${ok ? "bg-emerald-bright" : "bg-amber-400"}`}
+          className={`pulse-dot h-2 w-2 rounded-full ${ok ? "bg-emerald" : "bg-amber-400"}`}
         />
         {value}
       </dd>

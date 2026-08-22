@@ -37,8 +37,8 @@ export default function Navbar() {
     <header
       className={`fixed inset-x-0 top-0 z-50 transition-colors duration-300 ${
         solid
-          ? "border-b border-line bg-ink/85 backdrop-blur-xl"
-          : "border-b border-transparent bg-transparent"
+          ? "border-b border-line bg-white/86 shadow-sm shadow-emerald-950/5 backdrop-blur-xl"
+          : "border-b border-transparent bg-white/8 backdrop-blur-[2px]"
       }`}
     >
       <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between px-5 lg:px-8">
@@ -54,8 +54,10 @@ export default function Navbar() {
               className={({ isActive }) =>
                 `text-sm font-medium transition-colors ${
                   isActive
-                    ? "text-paper"
-                    : "text-mute hover:text-paper"
+                    ? "text-emerald-deep"
+                    : solid
+                      ? "text-mute hover:text-paper"
+                      : "text-white/82 hover:text-white"
                 }`
               }
             >
@@ -69,7 +71,7 @@ export default function Navbar() {
         </div>
 
         <button
-          className="text-paper lg:hidden"
+          className={`${solid ? "text-paper" : "text-white"} lg:hidden`}
           onClick={() => setMenuOpen((v) => !v)}
           aria-label="Toggle menu"
           aria-expanded={menuOpen}
@@ -88,7 +90,7 @@ export default function Navbar() {
                 className={({ isActive }) =>
                   `rounded-lg px-3 py-3 text-base font-medium transition-colors ${
                     isActive
-                      ? "bg-ink-3 text-paper"
+                      ? "bg-ink-3 text-emerald-deep"
                       : "text-mute hover:bg-ink-2 hover:text-paper"
                   }`
                 }

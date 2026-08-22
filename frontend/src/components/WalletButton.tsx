@@ -12,7 +12,7 @@ export default function WalletButton({ compact = false }: { compact?: boolean })
       <div className="relative">
         <button
           onClick={() => setOpen((v) => !v)}
-          className="flex items-center gap-2 rounded-lg border border-emerald/30 bg-emerald/10 px-3.5 py-2 text-sm font-medium text-emerald-bright transition-colors hover:bg-emerald/15"
+          className="flex items-center gap-2 rounded-lg border border-emerald/30 bg-emerald/10 px-3.5 py-2 text-sm font-medium text-emerald-deep transition-colors hover:bg-emerald/15"
         >
           <span className="pulse-dot h-1.5 w-1.5 rounded-full bg-emerald-bright" />
           <span className="font-mono text-xs">{shortAddress(address)}</span>
@@ -25,7 +25,7 @@ export default function WalletButton({ compact = false }: { compact?: boolean })
               onClick={() => setOpen(false)}
               aria-hidden="true"
             />
-            <div className="absolute right-0 z-50 mt-2 w-56 overflow-hidden rounded-xl border border-line-2 bg-ink-2 shadow-2xl">
+            <div className="absolute right-0 z-50 mt-2 w-56 overflow-hidden rounded-xl border border-line-2 bg-ink shadow-2xl">
               <div className="border-b border-line px-4 py-3">
                 <p className="text-[0.65rem] uppercase tracking-widest text-mute">
                   Connected account
@@ -39,7 +39,7 @@ export default function WalletButton({ compact = false }: { compact?: boolean })
                   disconnect()
                   setOpen(false)
                 }}
-                className="w-full px-4 py-3 text-left text-sm text-mute transition-colors hover:bg-ink-3 hover:text-paper"
+                className="w-full px-4 py-3 text-left text-sm text-mute transition-colors hover:bg-ink-2 hover:text-paper"
               >
                 Disconnect
               </button>
@@ -54,11 +54,11 @@ export default function WalletButton({ compact = false }: { compact?: boolean })
     <button
       onClick={connect}
       disabled={connecting}
-      className="flex items-center gap-2 rounded-lg bg-emerald px-4 py-2 text-sm font-semibold text-ink transition-all hover:bg-emerald-bright disabled:opacity-70"
+      className="flex items-center gap-2 rounded-lg bg-emerald px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-emerald-deep disabled:opacity-70"
     >
       {connecting ? (
         <>
-          <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-ink/30 border-t-ink" />
+          <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
           Connecting
         </>
       ) : (
@@ -73,7 +73,7 @@ export default function WalletButton({ compact = false }: { compact?: boolean })
 
 export function VerifiedBadge({ label = "Verified On-Chain" }: { label?: string }) {
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald/30 bg-emerald/10 px-2.5 py-1 text-[0.7rem] font-medium text-emerald-bright">
+    <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald/30 bg-emerald/10 px-2.5 py-1 text-[0.7rem] font-medium text-emerald-deep">
       <Check className="h-3 w-3" />
       {label}
     </span>

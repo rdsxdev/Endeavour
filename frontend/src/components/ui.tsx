@@ -5,9 +5,9 @@ import { creditStatus, type Credit } from "../api"
 export function StatusPill({ credit }: { credit: Credit }) {
   const status = creditStatus(credit)
   const styles: Record<string, string> = {
-    Verified: "border-emerald/30 bg-emerald/10 text-emerald-bright",
-    Retired: "border-sky-500/30 bg-sky-500/10 text-sky-300",
-    Pending: "border-amber-500/30 bg-amber-500/10 text-amber-300",
+    Verified: "border-emerald/30 bg-emerald/10 text-emerald-deep",
+    Retired: "border-sky-500/30 bg-sky-500/10 text-sky-700",
+    Pending: "border-amber-500/30 bg-amber-500/10 text-amber-700",
   }
   return (
     <span
@@ -37,7 +37,7 @@ export function SectionHeading({
     <div
       className={`${align === "center" ? "mx-auto max-w-2xl text-center" : "max-w-2xl"} ${className}`}
     >
-      {eyebrow && <p className="eyebrow text-emerald-bright">{eyebrow}</p>}
+      {eyebrow && <p className="eyebrow text-emerald-deep">{eyebrow}</p>}
       <h2 className="mt-3 text-3xl font-bold text-paper sm:text-4xl">{title}</h2>
       {intro && (
         <p className="mt-4 text-base leading-relaxed text-mute">{intro}</p>
@@ -56,7 +56,7 @@ export function Panel({
 }) {
   return (
     <div
-      className={`rounded-2xl border border-line bg-ink-2 ${className}`}
+      className={`rounded-2xl border border-line bg-ink shadow-sm shadow-emerald-950/5 ${className}`}
     >
       {children}
     </div>

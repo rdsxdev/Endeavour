@@ -33,7 +33,7 @@ export default function NetworkStatus({ inline = false }: { inline?: boolean }) 
         <span key={item.label} className="flex items-center gap-2 text-xs">
           <span
             className={`pulse-dot h-2 w-2 rounded-full ${
-              item.ok ? "bg-emerald-bright" : "bg-amber-400"
+              item.ok ? "bg-emerald" : "bg-amber-400"
             }`}
           />
           <span className="text-mute">{item.label}</span>

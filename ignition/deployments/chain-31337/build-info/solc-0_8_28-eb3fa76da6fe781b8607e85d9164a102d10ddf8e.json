@@ -1,0 +1,49 @@
+{
+  "_format": "hh3-sol-build-info-1",
+  "id": "solc-0_8_28-eb3fa76da6fe781b8607e85d9164a102d10ddf8e",
+  "solcVersion": "0.8.28",
+  "solcLongVersion": "0.8.28+commit.7893614a",
+  "compilerType": "solc",
+  "toolVersions": {
+    "hardhat": "3.7.0"
+  },
+  "userSourceNameMap": {
+    "contracts/CarbonRegistry.sol": "project/contracts/CarbonRegistry.sol"
+  },
+  "input": {
+    "language": "Solidity",
+    "settings": {
+      "evmVersion": "cancun",
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "outputSelection": {
+        "*": {
+          "": [
+            "ast"
+          ],
+          "*": [
+            "abi",
+            "evm.bytecode.linkReferences",
+            "evm.bytecode.object",
+            "evm.bytecode.opcodes",
+            "evm.bytecode.sourceMap",
+            "evm.deployedBytecode.immutableReferences",
+            "evm.deployedBytecode.linkReferences",
+            "evm.deployedBytecode.object",
+            "evm.deployedBytecode.opcodes",
+            "evm.deployedBytecode.sourceMap",
+            "evm.methodIdentifiers"
+          ]
+        }
+      },
+      "remappings": []
+    },
+    "sources": {
+      "project/contracts/CarbonRegistry.sol": {
+        "content": "// SPDX-License-Identifier: MIT\npragma solidity ^0.8.28;\n\n/**\n * CarbonRegistry — production-hardened\n *\n * Changes from v1:\n *  - Owner / admin role (only admin can verify credits)\n *  - credits[id].exists guard so ID 0 is distinguishable from \"not found\"\n *  - vintageYear must be <= current year (no future credits)\n *  - transferCredit: cannot transfer to self\n *  - retireCredit: must be verified before retiring\n *  - Custom errors (cheaper gas than revert strings)\n *  - Pausable: admin can halt all state-changing ops in an emergency\n *  - Event data enriched (owner on CreditCreated, newOwner on CreditTransferred)\n */\ncontract CarbonRegistry {\n\n    /* ------------------------------------------------------------------ */\n    /* Errors                                                               */\n    /* ------------------------------------------------------------------ */\n\n    error NotAdmin();\n    error NotOwner();\n    error AlreadyRetired();\n    error NotVerified();\n    error AlreadyVerified();\n    error InvalidAddress();\n    error SameOwner();\n    error CreditNotFound();\n    error EmptyString(string field);\n    error InvalidVintageYear(uint256 year);\n    error ContractPaused();\n\n    /* ------------------------------------------------------------------ */\n    /* Storage                                                              */\n    /* ------------------------------------------------------------------ */\n\n    struct Credit {\n        uint256 id;\n        string  project;\n        string  country;\n        uint256 vintageYear;\n        address owner;\n        bool    verified;\n        bool    retired;\n        uint256 createdAt;\n        bool    exists;\n    }\n\n    address public admin;\n    bool    public paused;\n    uint256 public nextCreditId;\n\n    mapping(uint256 => Credit) public credits;\n\n    /* ------------------------------------------------------------------ */\n    /* Events                                                               */\n    /* ------------------------------------------------------------------ */\n\n    event CreditCreated(\n        uint256 indexed id,\n        string  project,\n        string  country,\n        uint256 vintageYear,\n        address indexed owner\n    );\n\n    event CreditVerified(uint256 indexed id);\n\n    event CreditRetired(\n        uint256 indexed id,\n        address indexed retiredBy\n    );\n\n    event CreditTransferred(\n        uint256 indexed id,\n        address indexed from,\n        address indexed to\n    );\n\n    event AdminTransferred(address indexed oldAdmin, address indexed newAdmin);\n    event Paused(address by);\n    event Unpaused(address by);\n\n    /* ------------------------------------------------------------------ */\n    /* Modifiers                                                            */\n    /* ------------------------------------------------------------------ */\n\n    modifier onlyAdmin() {\n        if (msg.sender != admin) revert NotAdmin();\n        _;\n    }\n\n    modifier whenNotPaused() {\n        if (paused) revert ContractPaused();\n        _;\n    }\n\n    modifier creditExists(uint256 id) {\n        if (!credits[id].exists) revert CreditNotFound();\n        _;\n    }\n\n    /* ------------------------------------------------------------------ */\n    /* Constructor                                                          */\n    /* ------------------------------------------------------------------ */\n\n    constructor() {\n        admin = msg.sender;\n    }\n\n    /* ------------------------------------------------------------------ */\n    /* Admin                                                                */\n    /* ------------------------------------------------------------------ */\n\n    function transferAdmin(address newAdmin) external onlyAdmin {\n        if (newAdmin == address(0)) revert InvalidAddress();\n        emit AdminTransferred(admin, newAdmin);\n        admin = newAdmin;\n    }\n\n    function pause() external onlyAdmin {\n        paused = true;\n        emit Paused(msg.sender);\n    }\n\n    function unpause() external onlyAdmin {\n        paused = false;\n        emit Unpaused(msg.sender);\n    }\n\n    function verifyCredit(uint256 id)\n        external\n        onlyAdmin\n        whenNotPaused\n        creditExists(id)\n    {\n        if (credits[id].verified) revert AlreadyVerified();\n        credits[id].verified = true;\n        emit CreditVerified(id);\n    }\n\n    /* ------------------------------------------------------------------ */\n    /* Core                                                                 */\n    /* ------------------------------------------------------------------ */\n\n    function createCredit(\n        string memory project,\n        string memory country,\n        uint256 vintageYear\n    ) external whenNotPaused {\n        if (bytes(project).length == 0)  revert EmptyString(\"project\");\n        if (bytes(country).length == 0)  revert EmptyString(\"country\");\n\n        uint256 currentYear = (block.timestamp / 365 days) + 1970;\n        if (vintageYear < 1990 || vintageYear > currentYear) {\n            revert InvalidVintageYear(vintageYear);\n        }\n\n        uint256 id = nextCreditId;\n\n        credits[id] = Credit({\n            id:          id,\n            project:     project,\n            country:     country,\n            vintageYear: vintageYear,\n            owner:       msg.sender,\n            verified:    false,       // requires admin verification\n            retired:     false,\n            createdAt:   block.timestamp,\n            exists:      true\n        });\n\n        emit CreditCreated(id, project, country, vintageYear, msg.sender);\n\n        unchecked { nextCreditId++; }\n    }\n\n    function retireCredit(uint256 id)\n        external\n        whenNotPaused\n        creditExists(id)\n    {\n        Credit storage c = credits[id];\n        if (c.owner != msg.sender) revert NotOwner();\n        if (c.retired)             revert AlreadyRetired();\n        if (!c.verified)           revert NotVerified();\n\n        c.retired = true;\n        emit CreditRetired(id, msg.sender);\n    }\n\n    function transferCredit(uint256 id, address newOwner)\n        external\n        whenNotPaused\n        creditExists(id)\n    {\n        Credit storage c = credits[id];\n        if (c.owner != msg.sender)   revert NotOwner();\n        if (c.retired)               revert AlreadyRetired();\n        if (newOwner == address(0))  revert InvalidAddress();\n        if (newOwner == msg.sender)  revert SameOwner();\n\n        address oldOwner = c.owner;\n        c.owner = newOwner;\n\n        emit CreditTransferred(id, oldOwner, newOwner);\n    }\n\n    /* ------------------------------------------------------------------ */\n    /* View                                                                 */\n    /* ------------------------------------------------------------------ */\n\n    function getCredit(uint256 id)\n        external\n        view\n        creditExists(id)\n        returns (\n            uint256 _id,\n            string memory project,\n            string memory country,\n            uint256 vintageYear,\n            address owner,\n            bool verified,\n            bool retired,\n            uint256 createdAt\n        )\n    {\n        Credit memory c = credits[id];\n        return (\n            c.id,\n            c.project,\n            c.country,\n            c.vintageYear,\n            c.owner,\n            c.verified,\n            c.retired,\n            c.createdAt\n        );\n    }\n\n    function creditCount() external view returns (uint256) {\n        return nextCreditId;\n    }\n}"
+      }
+    }
+  }
+}
