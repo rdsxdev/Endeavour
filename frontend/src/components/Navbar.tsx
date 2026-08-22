@@ -27,9 +27,7 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", onScroll)
   }, [])
 
-  useEffect(() => {
-    setMenuOpen(false)
-  }, [location.pathname])
+  const closeMenu = () => setMenuOpen(false)
 
   const solid = scrolled || !onHome || menuOpen
 
@@ -87,6 +85,7 @@ export default function Navbar() {
               <NavLink
                 key={l.to}
                 to={l.to}
+                onClick={closeMenu}
                 className={({ isActive }) =>
                   `rounded-lg px-3 py-3 text-base font-medium transition-colors ${
                     isActive

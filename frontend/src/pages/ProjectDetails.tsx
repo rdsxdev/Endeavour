@@ -18,6 +18,7 @@ import {
   shortAddress,
   type Credit,
 } from "../api"
+import { usePageTitle } from "../hooks"
 import { categoryOf, volumeOf } from "../stats"
 import { StatusPill } from "../components/ui"
 import forest from "../assets/project-forest.jpg"
@@ -27,19 +28,30 @@ import satellite from "../assets/satellite.jpg"
 
 export default function ProjectDetails() {
   const { id } = useParams()
+  const parsed = Number(id)
+  const isValid = !Number.isNaN(parsed)
   const [credit, setCredit] = useState<Credit | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(isValid)
+
+  usePageTitle(credit?.project ?? "Credit Details")
 
   useEffect(() => {
-    const parsed = Number(id)
-    if (Number.isNaN(parsed)) {
-      setLoading(false)
-      return
-    }
+    if (!isValid) return
+    let cancelled = false
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setLoading(true)
     getCredit(parsed)
-      .then(setCredit)
-      .finally(() => setLoading(false))
-  }, [id])
+      .then((data) => {
+        if (!cancelled) setCredit(data)
+      })
+      .catch(() => {
+        if (!cancelled) setCredit(null)
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+    return () => { cancelled = true }
+  }, [id, parsed, isValid])
 
   const image = useMemo(() => {
     if (!credit) return forest

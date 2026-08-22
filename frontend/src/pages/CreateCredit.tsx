@@ -9,11 +9,13 @@ import {
   UploadCloud,
 } from "lucide-react"
 import { createCredit } from "../api"
+import { usePageTitle } from "../hooks"
 import heroRenewable from "../assets/hero-renewable.jpg"
 
 type Status = "idle" | "submitting" | "success" | "error"
 
 export default function CreateCredit() {
+  usePageTitle("Create Credit")
   const [status, setStatus] = useState<Status>("idle")
   const [txHash, setTxHash] = useState("")
   const [formData, setFormData] = useState({

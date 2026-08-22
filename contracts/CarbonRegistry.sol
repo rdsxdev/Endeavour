@@ -29,6 +29,7 @@ contract CarbonRegistry {
     error SameOwner();
     error CreditNotFound();
     error EmptyString(string field);
+    error StringTooLong(string field);
     error InvalidVintageYear(uint256 year);
     error ContractPaused();
 
@@ -48,6 +49,11 @@ contract CarbonRegistry {
         bool    exists;
     }
 
+    uint256 public constant MIN_VINTAGE_YEAR = 1990;
+    uint256 public constant MAX_PROJECT_LENGTH = 120;
+    uint256 public constant MAX_COUNTRY_LENGTH = 60;
+
+    address public immutable deployer;
     address public admin;
     bool    public paused;
     uint256 public nextCreditId;
@@ -107,6 +113,7 @@ contract CarbonRegistry {
     /* ------------------------------------------------------------------ */
 
     constructor() {
+        deployer = msg.sender;
         admin = msg.sender;
     }
 
@@ -150,11 +157,13 @@ contract CarbonRegistry {
         string memory country,
         uint256 vintageYear
     ) external whenNotPaused {
-        if (bytes(project).length == 0)  revert EmptyString("project");
-        if (bytes(country).length == 0)  revert EmptyString("country");
+        if (bytes(project).length == 0) revert EmptyString("project");
+        if (bytes(country).length == 0) revert EmptyString("country");
+        if (bytes(project).length > MAX_PROJECT_LENGTH) revert StringTooLong("project");
+        if (bytes(country).length > MAX_COUNTRY_LENGTH) revert StringTooLong("country");
 
         uint256 currentYear = (block.timestamp / 365 days) + 1970;
-        if (vintageYear < 1990 || vintageYear > currentYear) {
+        if (vintageYear < MIN_VINTAGE_YEAR || vintageYear > currentYear) {
             revert InvalidVintageYear(vintageYear);
         }
 

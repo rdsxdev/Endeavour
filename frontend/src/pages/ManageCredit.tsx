@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { Link } from "react-router-dom"
 import { Flame, Send, History, ArrowUpRight, ShieldCheck, Wallet } from "lucide-react"
+import { usePageTitle } from "../hooks"
 
 // Mock portfolio data for the dashboard
 const PORTFOLIO = [
@@ -10,6 +11,7 @@ const PORTFOLIO = [
 ]
 
 export default function ManageCredit() {
+  usePageTitle("Portfolio Manager")
   const [activeTab, setActiveTab] = useState<"holdings" | "history">("holdings")
 
   return (

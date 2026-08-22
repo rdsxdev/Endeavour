@@ -10,7 +10,7 @@ import {
   SlidersHorizontal,
   X,
 } from "lucide-react"
-import { useCredits } from "../hooks"
+import { useCredits, usePageTitle } from "../hooks"
 import {
   creditStatus,
   formatCompact,
@@ -37,6 +37,7 @@ const CATEGORIES: (Category | "All")[] = [
 ]
 
 export default function Registry() {
+  usePageTitle("Registry")
   const { credits, loading, live } = useCredits()
   const [query, setQuery] = useState("")
   const [status, setStatus] = useState<StatusFilter>("All")

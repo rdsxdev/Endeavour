@@ -4,13 +4,16 @@ import { BrowserRouter } from "react-router-dom"
 import "./index.css"
 import App from "./App.tsx"
 import { WalletProvider } from "./components/WalletContext.tsx"
+import ErrorBoundary from "./components/ErrorBoundary"
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <BrowserRouter>
-      <WalletProvider>
-        <App />
-      </WalletProvider>
-    </BrowserRouter>
+    <ErrorBoundary>
+      <BrowserRouter>
+        <WalletProvider>
+          <App />
+        </WalletProvider>
+      </BrowserRouter>
+    </ErrorBoundary>
   </StrictMode>,
 )

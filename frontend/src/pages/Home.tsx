@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom'
+import { usePageTitle } from '../hooks'
 
 export default function Home() {
+  usePageTitle("")
   return (
     <>
       <style>{`

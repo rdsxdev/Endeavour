@@ -11,6 +11,7 @@ import {
   ArrowUpRight,
 } from "lucide-react"
 import { useCredits, useHealth } from "../hooks"
+import { usePageTitle } from "../hooks"
 import { computeStats, categoryOf, volumeOf } from "../stats"
 import {
   formatNumber,
@@ -23,9 +24,10 @@ import PageHeader from "../components/PageHeader.tsx"
 import { Panel } from "../components/ui.tsx"
 
 export default function Analytics() {
+  usePageTitle("Analytics")
   const { credits: rawCredits, loading } = useCredits()
   const { health, live } = useHealth()
-  const credits = (rawCredits ?? []) as Credit[]
+  const credits: Credit[] = useMemo(() => rawCredits ?? [], [rawCredits])
   const stats = useMemo(() => computeStats(credits), [credits])
 
   const byCategory = useMemo(() => {

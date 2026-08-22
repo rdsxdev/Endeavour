@@ -1,10 +1,12 @@
 import { Link } from "react-router-dom"
 import { ArrowRight, Globe2, ShieldCheck, Cpu, CheckCircle2 } from "lucide-react"
+import { usePageTitle } from "../hooks"
 
 // Swapped to a much darker, moody, institutional-grade forest image
 const HIGH_RES_ABOUT = "https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?q=80&w=2600&auto=format&fit=crop"
 
 export default function About() {
+  usePageTitle("About")
   return (
     <div className="pb-24 bg-ink">
       {/* Premium Dark Image Header */}
