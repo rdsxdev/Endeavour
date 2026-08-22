@@ -4,6 +4,7 @@ import { ArrowRight } from "lucide-react";
 import { createCredit } from "../api";
 import { usePageTitle } from "../hooks";
 import Reveal from "../components/Reveal";
+import PageHeader from "../components/PageHeader";
 
 type Status = "idle" | "submitting" | "success" | "error";
 
@@ -104,28 +105,13 @@ export default function CreateCredit() {
 
   return (
     <div className="pb-24">
-      <section className="relative min-h-[380px] overflow-hidden border-b border-line">
-        <img
-          src={
-            "https://images.unsplash.com/photo-1506260408121-e353d10b87c7?q=80&w=1228&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
-          }
-          alt=""
-          className="absolute inset-0 h-full w-full object-cover opacity-90"
-        />
-        <div className="absolute inset-0 bg-gradient-to-r from-paper/90 via-paper/70 to-paper/30" />
-        <div className="relative mx-auto flex min-h-[380px] max-w-7xl items-end px-5 pb-12 pt-28 lg:px-8">
-          <Reveal>
-            <p className="eyebrow text-emerald-bright">Token issuance</p>
-            <h1 className="font-serif mt-3 text-4xl text-ink sm:text-5xl">
-              Create credit
-            </h1>
-            <p className="mt-4 max-w-xl text-ink/70">
-              Register a verified environmental asset and assign it to the
-              appropriate token pool.
-            </p>
-          </Reveal>
-        </div>
-      </section>
+      <PageHeader
+        eyebrow="Token issuance"
+        title="Create credit"
+        intro="Register a verified environmental asset and assign it to the appropriate token pool."
+        image="https://images.unsplash.com/photo-1506260408121-e353d10b87c7?q=80&w=1228&auto=format&fit=crop"
+        imageAlt="Wind turbines at sunset"
+      />
 
       <div className="mx-auto mt-10 grid max-w-7xl gap-8 px-5 lg:grid-cols-[0.65fr_1fr] lg:px-8">
         <Reveal>

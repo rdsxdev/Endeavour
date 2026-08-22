@@ -1,33 +1,39 @@
-import { useMemo, useState } from "react"
-import { Link } from "react-router-dom"
-import { Search, X } from "lucide-react"
-import { useCredits, usePageTitle } from "../hooks"
+import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
+import { Search, X } from "lucide-react";
+import { useCredits, usePageTitle } from "../hooks";
 import {
   creditStatus,
   formatCompact,
   formatNumber,
   shortAddress,
   type Credit,
-} from "../api"
-import { categoryOf, volumeOf, type Category } from "../stats"
-import { POOLS, type PoolKind } from "../pools"
-import { poolForCredit } from "../lib/poolForCredit"
-import CreditCard from "../components/CreditCard"
-import PageHeader from "../components/PageHeader"
-import Reveal from "../components/Reveal"
-import { StatusPill } from "../components/ui"
+} from "../api";
+import { categoryOf, volumeOf, type Category } from "../stats";
+import { POOLS, type PoolKind } from "../pools";
+import { poolForCredit } from "../lib/poolForCredit";
+import CreditCard from "../components/CreditCard";
+import PageHeader from "../components/PageHeader";
+import Reveal from "../components/Reveal";
+import { StatusPill } from "../components/ui";
+import heroForest from "../assets/hero-forest.jpg";
 
-type StatusFilter = "All" | "Verified" | "Retired" | "Pending"
-type SortKey = "newest" | "oldest" | "vintage" | "volume"
-type PoolFilter = "All" | PoolKind
+type StatusFilter = "All" | "Verified" | "Retired" | "Pending";
+type SortKey = "newest" | "oldest" | "vintage" | "volume";
+type PoolFilter = "All" | PoolKind;
 
-const STATUS_FILTERS: StatusFilter[] = ["All", "Verified", "Retired", "Pending"]
+const STATUS_FILTERS: StatusFilter[] = [
+  "All",
+  "Verified",
+  "Retired",
+  "Pending",
+];
 const POOL_FILTERS: { key: PoolFilter; label: string }[] = [
   { key: "All", label: "All pools" },
   { key: "carbon", label: "CarbonPool" },
   { key: "bio", label: "BioPool" },
   { key: "bond", label: "Green Bond" },
-]
+];
 const CATEGORIES: (Category | "All")[] = [
   "All",
   "Forest Conservation",
@@ -35,56 +41,57 @@ const CATEGORIES: (Category | "All")[] = [
   "Renewable Energy",
   "Blue Carbon",
   "Peatland",
-]
+];
 
 export default function Registry() {
-  usePageTitle("Registry")
-  const { credits, loading, live } = useCredits()
-  const [query, setQuery] = useState("")
-  const [status, setStatus] = useState<StatusFilter>("All")
-  const [category, setCategory] = useState<Category | "All">("All")
-  const [pool, setPool] = useState<PoolFilter>("All")
-  const [sort, setSort] = useState<SortKey>("newest")
-  const [view, setView] = useState<"table" | "grid">("table")
+  usePageTitle("Registry");
+  const { credits, loading, live } = useCredits();
+  const [query, setQuery] = useState("");
+  const [status, setStatus] = useState<StatusFilter>("All");
+  const [category, setCategory] = useState<Category | "All">("All");
+  const [pool, setPool] = useState<PoolFilter>("All");
+  const [sort, setSort] = useState<SortKey>("newest");
+  const [view, setView] = useState<"table" | "grid">("table");
 
   const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase()
+    const q = query.trim().toLowerCase();
     return [...credits]
       .filter((c) => {
         const matchesQuery =
           !q ||
           c.project.toLowerCase().includes(q) ||
           c.country.toLowerCase().includes(q) ||
-          c.id.toString() === q
+          c.id.toString() === q;
         return (
           matchesQuery &&
           (status === "All" || creditStatus(c) === status) &&
           (category === "All" || categoryOf(c.project) === category) &&
           (pool === "All" || poolForCredit(c) === pool)
-        )
+        );
       })
       .sort((a, b) => {
-        if (sort === "oldest") return a.created_at - b.created_at
-        if (sort === "vintage") return b.vintage_year - a.vintage_year
-        if (sort === "volume") return volumeOf(b) - volumeOf(a)
-        return b.created_at - a.created_at
-      })
-  }, [credits, query, status, category, pool, sort])
+        if (sort === "oldest") return a.created_at - b.created_at;
+        if (sort === "vintage") return b.vintage_year - a.vintage_year;
+        if (sort === "volume") return volumeOf(b) - volumeOf(a);
+        return b.created_at - a.created_at;
+      });
+  }, [credits, query, status, category, pool, sort]);
 
   const summary = useMemo(() => {
-    const volume = filtered.reduce((sum, c) => sum + volumeOf(c), 0)
-    const projects = new Set(filtered.map((c) => c.project)).size
-    const countries = new Set(filtered.map((c) => c.country)).size
-    return { volume, projects, countries }
-  }, [filtered])
+    const volume = filtered.reduce((sum, c) => sum + volumeOf(c), 0);
+    const projects = new Set(filtered.map((c) => c.project)).size;
+    const countries = new Set(filtered.map((c) => c.country)).size;
+    return { volume, projects, countries };
+  }, [filtered]);
 
-  const hasActiveFilters = query !== "" || status !== "All" || category !== "All" || pool !== "All"
+  const hasActiveFilters =
+    query !== "" || status !== "All" || category !== "All" || pool !== "All";
   const clearFilters = () => {
-    setQuery("")
-    setStatus("All")
-    setCategory("All")
-    setPool("All")
-  }
+    setQuery("");
+    setStatus("All");
+    setCategory("All");
+    setPool("All");
+  };
 
   return (
     <div className="min-h-screen bg-ink">
@@ -92,10 +99,18 @@ export default function Registry() {
         eyebrow="On-chain registry"
         title="Registry"
         intro="Search credits across CarbonPool, BioPool, and Green Bond Vault — filter by project, jurisdiction, vintage, and verification state."
+        image={
+          "https://images.unsplash.com/photo-1542273917363-3b1817f69a2d?q=80&w=3074&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+        }
+        imageAlt="Forest canopy aerial view"
       >
         <div className="surface flex items-center gap-2 px-4 py-2.5">
-          <span className={`pulse-dot h-1.5 w-1.5 rounded-full ${live ? "bg-emerald" : "bg-amber"}`} />
-          <span className="text-sm text-mute">{live ? "Live data" : "Snapshot"}</span>
+          <span
+            className={`pulse-dot h-1.5 w-1.5 rounded-full ${live ? "bg-emerald" : "bg-amber"}`}
+          />
+          <span className="text-sm text-mute">
+            {live ? "Live data" : "Snapshot"}
+          </span>
         </div>
       </PageHeader>
 
@@ -103,13 +118,22 @@ export default function Registry() {
         {!loading && (
           <div className="mb-8 grid gap-4 md:grid-cols-3">
             <Reveal>
-              <SummaryStat label="Filtered volume" value={`${formatCompact(summary.volume)} tCO₂e`} />
+              <SummaryStat
+                label="Filtered volume"
+                value={`${formatCompact(summary.volume)} tCO₂e`}
+              />
             </Reveal>
             <Reveal delay={60}>
-              <SummaryStat label="Projects" value={formatNumber(summary.projects)} />
+              <SummaryStat
+                label="Projects"
+                value={formatNumber(summary.projects)}
+              />
             </Reveal>
             <Reveal delay={120}>
-              <SummaryStat label="Countries" value={formatNumber(summary.countries)} />
+              <SummaryStat
+                label="Countries"
+                value={formatNumber(summary.countries)}
+              />
             </Reveal>
           </div>
         )}
@@ -165,7 +189,9 @@ export default function Registry() {
                       type="button"
                       onClick={() => setView(v)}
                       className={`px-4 py-2.5 text-sm capitalize ${
-                        view === v ? "bg-emerald/8 text-emerald-deep" : "text-mute hover:text-paper"
+                        view === v
+                          ? "bg-emerald/8 text-emerald-deep"
+                          : "text-mute hover:text-paper"
                       }`}
                     >
                       {v}
@@ -177,19 +203,31 @@ export default function Registry() {
 
             <div className="mt-4 flex flex-wrap items-center gap-2">
               {POOL_FILTERS.map(({ key, label }) => (
-                <FilterChip key={key} active={pool === key} onClick={() => setPool(key)}>
+                <FilterChip
+                  key={key}
+                  active={pool === key}
+                  onClick={() => setPool(key)}
+                >
                   {label}
                 </FilterChip>
               ))}
               <span className="mx-1 h-5 w-px bg-line" />
               {STATUS_FILTERS.map((item) => (
-                <FilterChip key={item} active={status === item} onClick={() => setStatus(item)}>
+                <FilterChip
+                  key={item}
+                  active={status === item}
+                  onClick={() => setStatus(item)}
+                >
                   {item}
                 </FilterChip>
               ))}
               <span className="mx-1 h-5 w-px bg-line" />
               {CATEGORIES.map((item) => (
-                <FilterChip key={item} active={category === item} onClick={() => setCategory(item)}>
+                <FilterChip
+                  key={item}
+                  active={category === item}
+                  onClick={() => setCategory(item)}
+                >
                   {item}
                 </FilterChip>
               ))}
@@ -231,7 +269,7 @@ export default function Registry() {
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 function SummaryStat({ label, value }: { label: string; value: string }) {
@@ -240,7 +278,7 @@ function SummaryStat({ label, value }: { label: string; value: string }) {
       <p className="label">{label}</p>
       <p className="mt-2 font-mono text-xl text-paper">{value}</p>
     </div>
-  )
+  );
 }
 
 function FilterChip({
@@ -248,9 +286,9 @@ function FilterChip({
   onClick,
   children,
 }: {
-  active: boolean
-  onClick: () => void
-  children: React.ReactNode
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
 }) {
   return (
     <button
@@ -264,7 +302,7 @@ function FilterChip({
     >
       {children}
     </button>
-  )
+  );
 }
 
 function RegistryTable({ credits }: { credits: Credit[] }) {
@@ -291,35 +329,58 @@ function RegistryTable({ credits }: { credits: Credit[] }) {
                 #{credit.id.toString().padStart(4, "0")}
               </td>
               <td className="px-5 py-3.5">
-                <Link to={`/credit/${credit.id}`} className="font-medium text-paper hover:text-emerald-deep">
+                <Link
+                  to={`/credit/${credit.id}`}
+                  className="font-medium text-paper hover:text-emerald-deep"
+                >
                   {credit.project}
                 </Link>
               </td>
               <td className="px-5 py-3.5 font-mono text-xs text-mute">
-                {poolForCredit(credit) === "carbon" ? "eCO₂" : poolForCredit(credit) === "bio" ? "eBIO" : "eGBND"}
+                {poolForCredit(credit) === "carbon"
+                  ? "eCO₂"
+                  : poolForCredit(credit) === "bio"
+                    ? "eBIO"
+                    : "eGBND"}
               </td>
-              <td className="px-5 py-3.5 text-mute">{categoryOf(credit.project)}</td>
+              <td className="px-5 py-3.5 text-mute">
+                {categoryOf(credit.project)}
+              </td>
               <td className="px-5 py-3.5 text-mute">{credit.country}</td>
-              <td className="px-5 py-3.5 text-right font-mono">{credit.vintage_year}</td>
-              <td className="px-5 py-3.5 text-right font-mono">{formatNumber(volumeOf(credit))}</td>
-              <td className="px-5 py-3.5 font-mono text-mute">{shortAddress(credit.owner)}</td>
-              <td className="px-5 py-3.5"><StatusPill credit={credit} /></td>
+              <td className="px-5 py-3.5 text-right font-mono">
+                {credit.vintage_year}
+              </td>
+              <td className="px-5 py-3.5 text-right font-mono">
+                {formatNumber(volumeOf(credit))}
+              </td>
+              <td className="px-5 py-3.5 font-mono text-mute">
+                {shortAddress(credit.owner)}
+              </td>
+              <td className="px-5 py-3.5">
+                <StatusPill credit={credit} />
+              </td>
             </tr>
           ))}
         </tbody>
       </table>
     </div>
-  )
+  );
 }
 
 function EmptyState({ onClear }: { onClear: () => void }) {
   return (
     <div className="flex flex-col items-center border border-dashed border-line py-24 text-center">
       <p className="font-serif text-xl text-paper">No records match</p>
-      <p className="mt-2 max-w-sm text-sm text-mute">Adjust filters or search terms to broaden the registry scope.</p>
-      <button type="button" onClick={onClear} className="mt-6 bg-emerald px-5 py-2.5 text-sm font-medium text-white hover:bg-emerald-deep">
+      <p className="mt-2 max-w-sm text-sm text-mute">
+        Adjust filters or search terms to broaden the registry scope.
+      </p>
+      <button
+        type="button"
+        onClick={onClear}
+        className="mt-6 bg-emerald px-5 py-2.5 text-sm font-medium text-white hover:bg-emerald-deep"
+      >
         Reset filters
       </button>
     </div>
-  )
+  );
 }

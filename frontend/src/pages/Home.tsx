@@ -165,7 +165,7 @@ export default function Home() {
           <div className="mt-14 grid gap-px bg-line md:grid-cols-3">
             {PILLARS.map((p, i) => (
               <Reveal key={p.num} delay={i * 80}>
-                <article className="bg-ink-2 p-8 md:p-10">
+                <article className="bg-ink-2 p-8 md:p-10 h-full">
                   <span className="font-mono text-sm text-emerald-deep">
                     {p.num}
                   </span>

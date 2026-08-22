@@ -36,7 +36,7 @@ export default function Navbar() {
       }`}
     >
       <nav className="mx-auto flex h-[3.75rem] max-w-7xl items-center justify-between px-5 lg:px-8">
-        <Link to="/" aria-label="Endeavour home">
+        <Link to="/" aria-label="Endeavour home" className="h-fit flex">
           <Logo inverted={!solid} />
         </Link>
 

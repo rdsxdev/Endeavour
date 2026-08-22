@@ -1,38 +1,75 @@
-import { useState, useMemo } from "react"
-import { Link } from "react-router-dom"
-import { usePageTitle } from "../hooks"
-import { POOLS, poolColor } from "../pools"
-import { formatCompact } from "../api"
-import PageHeader from "../components/PageHeader"
-import Reveal from "../components/Reveal"
-import AreaChart from "../components/AreaChart"
-import Sparkline from "../components/Sparkline"
+import { useState, useMemo } from "react";
+import { Link } from "react-router-dom";
+import { usePageTitle } from "../hooks";
+import { POOLS, poolColor } from "../pools";
+import { formatCompact } from "../api";
+import PageHeader from "../components/PageHeader";
+import Reveal from "../components/Reveal";
+import AreaChart from "../components/AreaChart";
+import Sparkline from "../components/Sparkline";
+import heroRenewable from "../assets/hero-renewable.jpg";
 
 const PORTFOLIO = [
-  { id: "4920", project: "Rimba Raya Biodiversity", pool: "bio" as const, volume: 25000, status: "Active", vintage: 2023 },
-  { id: "4921", project: "Keo Seima Wildlife", pool: "bio" as const, volume: 10000, status: "Active", vintage: 2022 },
-  { id: "4810", project: "Solar Farm Rajasthan", pool: "carbon" as const, volume: 5000, status: "Retired", vintage: 2021 },
-  { id: "4755", project: "UK Green Gilt 2030", pool: "bond" as const, volume: 500000, status: "Active", vintage: 2024 },
-]
+  {
+    id: "4920",
+    project: "Rimba Raya Biodiversity",
+    pool: "bio" as const,
+    volume: 25000,
+    status: "Active",
+    vintage: 2023,
+  },
+  {
+    id: "4921",
+    project: "Keo Seima Wildlife",
+    pool: "bio" as const,
+    volume: 10000,
+    status: "Active",
+    vintage: 2022,
+  },
+  {
+    id: "4810",
+    project: "Solar Farm Rajasthan",
+    pool: "carbon" as const,
+    volume: 5000,
+    status: "Retired",
+    vintage: 2021,
+  },
+  {
+    id: "4755",
+    project: "UK Green Gilt 2030",
+    pool: "bond" as const,
+    volume: 500000,
+    status: "Active",
+    vintage: 2024,
+  },
+];
 
 export default function ManageCredit() {
-  usePageTitle("Portfolio")
-  const [activeTab, setActiveTab] = useState<"holdings" | "history">("holdings")
+  usePageTitle("Portfolio");
+  const [activeTab, setActiveTab] = useState<"holdings" | "history">(
+    "holdings",
+  );
 
-  const activeVolume = PORTFOLIO.filter((p) => p.status === "Active").reduce((s, p) => s + p.volume, 0)
-  const retiredVolume = PORTFOLIO.filter((p) => p.status === "Retired").reduce((s, p) => s + p.volume, 0)
+  const activeVolume = PORTFOLIO.filter((p) => p.status === "Active").reduce(
+    (s, p) => s + p.volume,
+    0,
+  );
+  const retiredVolume = PORTFOLIO.filter((p) => p.status === "Retired").reduce(
+    (s, p) => s + p.volume,
+    0,
+  );
 
   const poolBreakdown = useMemo(() => {
-    const map = new Map<string, number>()
+    const map = new Map<string, number>();
     for (const p of PORTFOLIO.filter((a) => a.status === "Active")) {
-      map.set(p.pool, (map.get(p.pool) ?? 0) + p.volume)
+      map.set(p.pool, (map.get(p.pool) ?? 0) + p.volume);
     }
-    return [...map.entries()]
-  }, [])
+    return [...map.entries()];
+  }, []);
 
   const filtered = PORTFOLIO.filter((p) =>
     activeTab === "holdings" ? p.status === "Active" : p.status === "Retired",
-  )
+  );
 
   return (
     <>
@@ -40,6 +77,10 @@ export default function ManageCredit() {
         eyebrow="Institutional portfolio"
         title="Manage"
         intro="Holdings across CarbonPool, BioPool, and Green Bond Vault — transfer, retire, or issue new credits."
+        image={
+          "https://images.unsplash.com/photo-1559767180-47d8f4919e5d?q=80&w=2715&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+        }
+        imageAlt="Renewable energy landscape"
       >
         <div className="surface px-4 py-2.5 font-mono text-sm text-paper">
           0x8F9a…2B4c
@@ -80,23 +121,32 @@ export default function ManageCredit() {
           <Reveal className="lg:col-span-2">
             <div className="surface p-6">
               <h3 className="font-serif text-lg text-paper">Pool allocation</h3>
-              <p className="mt-1 text-sm text-mute">Active holdings by token pool</p>
+              <p className="mt-1 text-sm text-mute">
+                Active holdings by token pool
+              </p>
               <div className="mt-6 space-y-4">
                 {poolBreakdown.map(([kind, vol]) => {
-                  const pool = POOLS.find((p) => p.kind === kind)
-                  const color = poolColor(kind as "carbon" | "bio" | "bond")
-                  const pct = Math.round((vol / activeVolume) * 100)
+                  const pool = POOLS.find((p) => p.kind === kind);
+                  const color = poolColor(kind as "carbon" | "bio" | "bond");
+                  const pct = Math.round((vol / activeVolume) * 100);
                   return (
                     <div key={kind}>
                       <div className="flex justify-between text-sm">
-                        <span className="font-mono text-mute">{pool?.symbol}</span>
-                        <span className="text-paper">{formatCompact(vol)} ({pct}%)</span>
+                        <span className="font-mono text-mute">
+                          {pool?.symbol}
+                        </span>
+                        <span className="text-paper">
+                          {formatCompact(vol)} ({pct}%)
+                        </span>
                       </div>
                       <div className="mt-2 h-2 bg-ink-3">
-                        <div className="h-full" style={{ width: `${pct}%`, background: color }} />
+                        <div
+                          className="h-full"
+                          style={{ width: `${pct}%`, background: color }}
+                        />
                       </div>
                     </div>
-                  )
+                  );
                 })}
               </div>
             </div>
@@ -130,7 +180,9 @@ export default function ManageCredit() {
                     : "text-mute hover:text-paper"
                 }`}
               >
-                {tab === "holdings" ? "Current holdings" : "Transaction history"}
+                {tab === "holdings"
+                  ? "Current holdings"
+                  : "Transaction history"}
               </button>
             ))}
           </div>
@@ -152,44 +204,68 @@ export default function ManageCredit() {
               </thead>
               <tbody className="divide-y divide-line">
                 {filtered.map((asset) => {
-                  const pool = POOLS.find((p) => p.kind === asset.pool)
+                  const pool = POOLS.find((p) => p.kind === asset.pool);
                   return (
                     <tr key={asset.id} className="hover:bg-ink-2">
-                      <td className="px-5 py-3.5 font-mono text-mute">#{asset.id}</td>
-                      <td className="px-5 py-3.5 font-medium text-paper">{asset.project}</td>
+                      <td className="px-5 py-3.5 font-mono text-mute">
+                        #{asset.id}
+                      </td>
+                      <td className="px-5 py-3.5 font-medium text-paper">
+                        {asset.project}
+                      </td>
                       <td className="px-5 py-3.5">
                         <span className="inline-flex items-center gap-2 font-mono text-xs">
-                          <Sparkline data={pool?.trend ?? []} color={poolColor(asset.pool)} width={48} height={20} />
+                          <Sparkline
+                            data={pool?.trend ?? []}
+                            color={poolColor(asset.pool)}
+                            width={48}
+                            height={20}
+                          />
                           {pool?.symbol}
                         </span>
                       </td>
                       <td className="px-5 py-3.5 font-mono">{asset.vintage}</td>
-                      <td className="px-5 py-3.5 font-mono">{asset.volume.toLocaleString()}</td>
+                      <td className="px-5 py-3.5 font-mono">
+                        {asset.volume.toLocaleString()}
+                      </td>
                       <td className="px-5 py-3.5">
-                        <span className={`text-xs font-medium uppercase tracking-wide ${
-                          asset.status === "Active" ? "text-emerald-deep" : "text-mute"
-                        }`}>
+                        <span
+                          className={`text-xs font-medium uppercase tracking-wide ${
+                            asset.status === "Active"
+                              ? "text-emerald-deep"
+                              : "text-mute"
+                          }`}
+                        >
                           {asset.status}
                         </span>
                       </td>
                       <td className="px-5 py-3.5 text-right">
                         {asset.status === "Active" ? (
                           <div className="flex justify-end gap-2">
-                            <button type="button" className="border border-line px-3 py-1 text-xs hover:bg-ink-2">
+                            <button
+                              type="button"
+                              className="border border-line px-3 py-1 text-xs hover:bg-ink-2"
+                            >
                               Transfer
                             </button>
-                            <button type="button" className="border border-line px-3 py-1 text-xs text-amber hover:bg-ink-2">
+                            <button
+                              type="button"
+                              className="border border-line px-3 py-1 text-xs text-amber hover:bg-ink-2"
+                            >
                               Retire
                             </button>
                           </div>
                         ) : (
-                          <Link to={`/credit/${asset.id}`} className="text-xs text-emerald-deep hover:text-emerald">
+                          <Link
+                            to={`/credit/${asset.id}`}
+                            className="text-xs text-emerald-deep hover:text-emerald"
+                          >
                             Certificate →
                           </Link>
                         )}
                       </td>
                     </tr>
-                  )
+                  );
                 })}
               </tbody>
             </table>
@@ -197,5 +273,5 @@ export default function ManageCredit() {
         </Reveal>
       </div>
     </>
-  )
+  );
 }

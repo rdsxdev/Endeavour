@@ -1,6 +1,6 @@
-import { Link } from "react-router-dom"
-import Logo from "./Logo"
-import NetworkStatus from "./NetworkStatus"
+import { Link } from "react-router-dom";
+import Logo from "./Logo";
+import NetworkStatus from "./NetworkStatus";
 
 const COLUMNS = [
   {
@@ -29,18 +29,19 @@ const COLUMNS = [
       { label: "Contact", to: "/about#contact" },
     ],
   },
-]
+];
 
 export default function Footer() {
   return (
-    <footer className="border-t border-line bg-paper text-ink">
+    <footer className="border-t border-line bg-emerald-deep text-ink">
       <div className="mx-auto max-w-7xl px-5 py-16 lg:px-8">
         <div className="grid gap-12 lg:grid-cols-[1.4fr_repeat(3,1fr)]">
           <div>
             <Logo inverted />
             <p className="mt-5 max-w-xs text-sm leading-relaxed text-ink/60">
               Token infrastructure for carbon credits, biodiversity pools, and
-              sovereign green bonds — one auditable registry for climate finance.
+              sovereign green bonds — one auditable registry for climate
+              finance.
             </p>
             <div className="mt-6">
               <NetworkStatus dark />
@@ -76,5 +77,5 @@ export default function Footer() {
         </div>
       </div>
     </footer>
-  )
+  );
 }
