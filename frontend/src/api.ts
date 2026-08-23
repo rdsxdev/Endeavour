@@ -150,9 +150,9 @@ export async function getHealth(): Promise<HealthStatus> {
 
 export async function getCredits(): Promise<Credit[]> {
   try {
-    const { data } = await api.get<Credit[]>("/credits")
+    const { data } = await api.get<{ items: Credit[] }>("/credits")
     markLive()
-    return data
+    return data.items
   } catch {
     markOffline()
     return allOfflineCredits()
