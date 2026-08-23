@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { usePageTitle } from "../hooks";
 import { POOLS, poolColor } from "../pools";
-import { formatCompact } from "../api";
+import { formatCompact, retireCredit, transferCredit } from "../api";
 import PageHeader from "../components/PageHeader";
 import Reveal from "../components/Reveal";
 import AreaChart from "../components/AreaChart";
@@ -45,15 +45,18 @@ const PORTFOLIO = [
 
 export default function ManageCredit() {
   usePageTitle("Portfolio");
+  const [portfolio, setPortfolio] = useState(PORTFOLIO);
+  const [busy, setBusy] = useState<string | null>(null);
+
   const [activeTab, setActiveTab] = useState<"holdings" | "history">(
     "holdings",
   );
 
-  const activeVolume = PORTFOLIO.filter((p) => p.status === "Active").reduce(
+  const activeVolume = portfolio.filter((p) => p.status === "Active").reduce(
     (s, p) => s + p.volume,
     0,
   );
-  const retiredVolume = PORTFOLIO.filter((p) => p.status === "Retired").reduce(
+  const retiredVolume = portfolio.filter((p) => p.status === "Retired").reduce(
     (s, p) => s + p.volume,
     0,
   );
@@ -66,7 +69,7 @@ export default function ManageCredit() {
     return [...map.entries()];
   }, []);
 
-  const filtered = PORTFOLIO.filter((p) =>
+  const filtered = portfolio.filter((p) =>
     activeTab === "holdings" ? p.status === "Active" : p.status === "Retired",
   );
 
@@ -243,15 +246,65 @@ export default function ManageCredit() {
                           <div className="flex justify-end gap-2">
                             <button
                               type="button"
-                              className="border border-line px-3 py-1 text-xs hover:bg-ink-2"
+                              disabled={busy === asset.id}
+                              onClick={async () => {
+                                const newOwner = window.prompt(
+                                  "Enter the new Ethereum wallet address:"
+                                );
+                                if (!newOwner) return;
+
+                                try {
+                                  setBusy(asset.id);
+                                  await transferCredit(Number(asset.id), newOwner);
+                                  alert("Credit transferred successfully.");
+                                } catch (err) {
+                                  alert(
+                                    err instanceof Error
+                                      ? err.message
+                                      : "Transfer failed."
+                                  );
+                                } finally {
+                                  setBusy(null);
+                                }
+                              }}
+                              className="border border-line px-3 py-1 text-xs hover:bg-ink-2 disabled:opacity-50"
                             >
-                              Transfer
+                              {busy === asset.id ? "..." : "Transfer"}
                             </button>
                             <button
                               type="button"
-                              className="border border-line px-3 py-1 text-xs text-amber hover:bg-ink-2"
+                              disabled={busy === asset.id}
+                              onClick={async () => {
+                                if (!window.confirm(
+                                  `Retire credit #${asset.id}? This action is permanent.`
+                                )) return;
+
+                                try {
+                                  setBusy(asset.id);
+                                  await retireCredit(Number(asset.id));
+
+                                  setPortfolio((current) =>
+                                    current.map((item) =>
+                                      item.id === asset.id
+                                        ? { ...item, status: "Retired" }
+                                        : item
+                                    )
+                                  );
+
+                                  alert("Credit retired successfully.");
+                                } catch (err) {
+                                  alert(
+                                    err instanceof Error
+                                      ? err.message
+                                      : "Retirement failed."
+                                  );
+                                } finally {
+                                  setBusy(null);
+                                }
+                              }}
+                              className="border border-line px-3 py-1 text-xs text-amber hover:bg-ink-2 disabled:opacity-50"
                             >
-                              Retire
+                              {busy === asset.id ? "..." : "Retire"}
                             </button>
                           </div>
                         ) : (
