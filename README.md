@@ -1,57 +1,285 @@
-# Sample Hardhat 3 Project (`node:test` and `viem`)
+Endeavour
 
-This project showcases a Hardhat 3 project using the native Node.js test runner (`node:test`) and the `viem` library for Ethereum interactions.
+Climate token infrastructure for a transparent, auditable environmental asset registry.
 
-To learn more about Hardhat 3, please visit the [Getting Started guide](https://hardhat.org/docs/getting-started#getting-started-with-hardhat-3). To share your feedback, join our [Hardhat 3](https://hardhat.org/hardhat3-telegram-group) Telegram group or [open an issue](https://github.com/NomicFoundation/hardhat/issues/new) in our GitHub issue tracker.
+Endeavour brings carbon credits, biodiversity pools, and green bonds into a single registry where ownership, lifecycle events, and environmental assets can be tracked through blockchain-backed records.
 
-## Project Overview
+The future is not inherited. We borrow it from our children.
 
-This example project includes:
+Live Demo · GitHub
 
-- A simple Hardhat configuration file.
-- Foundry-compatible Solidity unit tests.
-- TypeScript integration tests using [`node:test`](nodejs.org/api/test.html), the new Node.js native test runner, and [`viem`](https://viem.sh/).
-- Examples demonstrating how to connect to different types of networks, including locally simulating OP mainnet.
+The idea
 
-## Usage
+Environmental assets are only useful at scale when people can trust the records behind them.
 
-### Running Tests
+Endeavour addresses that infrastructure problem by combining an Ethereum smart contract with an indexed database and a web application. The blockchain provides an immutable record for critical asset events; the backend makes that state queryable; the frontend turns it into something people can actually use.
 
-To run all the tests in the project, execute the following command:
+Traceability. Transparency. Accountability.
 
-```shell
+Architecture
+
+flowchart LR
+    U[User / Wallet] --> F[React + TypeScript Frontend]
+    F -->|REST / HTTPS| B[FastAPI Backend]
+    B --> S[Credit Services]
+    B --> R[Repository Layer]
+    B --> W[Web3 Client]
+    R --> DB[(PostgreSQL)]
+    W -->|RPC| C[CarbonRegistry / Ethereum Sepolia]
+    C -->|Events| I[Blockchain Indexer]
+    I -->|Upsert / Update| DB
+    I -->|Track indexed block| DB
+
+Data flow
+
+User
+  |
+  v
+Frontend
+  |
+  +-------------- REST ----------------> FastAPI
+                                          |
+                                          +--> PostgreSQL
+                                          |
+                                          +--> Web3
+                                               |
+                                               v
+                                        CarbonRegistry
+                                          (Sepolia)
+                                               |
+                                            Events
+                                               |
+                                               v
+                                      Blockchain Indexer
+                                               |
+                                               v
+                                          PostgreSQL
+
+What the platform does
+
+Registry
+
+Browse environmental credits with project, country, vintage, ownership, verification, and retirement state.
+
+Portfolio
+
+Manage on-chain holdings and initiate supported lifecycle operations.
+
+Transfer
+
+Transfer ownership of a credit to another Ethereum address through the CarbonRegistry contract.
+
+Retirement
+
+Permanently retire a credit. The retirement is recorded on-chain and reflected in the indexed registry.
+
+Analytics
+
+Surface registry-level statistics across supported environmental asset pools.
+
+Blockchain indexing
+
+Listen for contract events and synchronize confirmed blockchain state into PostgreSQL so the application can query it efficiently.
+
+Credit lifecycle
+
+stateDiagram-v2
+    [*] --> Created
+    Created --> Verified
+    Verified --> Active
+    Active --> Transferred
+    Transferred --> Active
+    Active --> Retired
+    Retired --> [*]
+
+The database is an indexed representation of blockchain state, not a replacement for it.
+
+Smart contract
+
+The core contract is CarbonRegistry.
+
+Network: Ethereum Sepolia
+
+Contract address
+
+0x6c6Cd9cF0e0214d787350089C8f5B8b93144A447
+
+Core lifecycle functions:
+
+retireCredit(uint256 id)
+transferCredit(uint256 id, address newOwner)
+
+Lifecycle events:
+
+CreditCreated
+CreditVerified
+CreditTransferred
+CreditRetired
+
+Stack
+
+Layer
+
+Technology
+
+Frontend
+
+React, TypeScript, Vite, Tailwind CSS
+
+API
+
+FastAPI, Pydantic
+
+Database
+
+PostgreSQL, SQLAlchemy
+
+Blockchain
+
+Solidity, Ethereum Sepolia
+
+Web3
+
+Web3.py, viem
+
+Contract tooling
+
+Hardhat 3, Ignition
+
+Deployment
+
+Render
+
+Repository structure
+
+Endeavour/
+├── contracts/
+│   └── CarbonRegistry.sol
+├── ignition/
+│   └── modules/
+├── test/
+├── backend/
+│   └── app/
+│       ├── blockchain/
+│       ├── models/
+│       ├── repositories/
+│       ├── routers/
+│       ├── schemas/
+│       └── services/
+├── frontend/
+│   └── src/
+│       ├── components/
+│       ├── pages/
+│       ├── hooks/
+│       └── api.ts
+└── README.md
+
+API
+
+GET  /health
+GET  /ready
+GET  /config
+
+GET  /credits
+GET  /credits/{credit_id}
+GET  /credits/stats
+
+POST /transactions
+GET  /transactions/{tx_hash}
+
+POST /index/sync
+
+FastAPI provides interactive API documentation at /docs.
+
+Getting started
+
+Clone
+
+git clone https://github.com/rdsxdev/Endeavour.git
+cd Endeavour
+
+Backend
+
+cd backend
+python -m venv ../venv
+source ../venv/bin/activate
+pip install -r requirements.txt
+uvicorn app.main:app --reload
+
+Configure the required RPC and database environment variables before starting the service.
+
+Frontend
+
+cd ../frontend
+npm install
+npm run dev
+
+Production build:
+
+npm run build
+
+Contracts
+
+cd ..
+npm install
+npx hardhat compile
 npx hardhat test
-```
 
-You can also selectively run the Solidity or `node:test` tests:
+Sepolia deployment requires a funded deployment account and configured deployment credentials.
 
-```shell
-npx hardhat test solidity
-npx hardhat test nodejs
-```
+Design decisions
 
-### Make a deployment to Sepolia
+Blockchain for ownership and lifecycle.
+Transfers and retirement are represented by contract state and events.
 
-This project includes an example Ignition module to deploy the contract. You can deploy this module to a locally simulated chain or to Sepolia.
+PostgreSQL for querying.
+The relational index makes filtering, pagination, statistics, and application reads practical.
 
-To run the deployment to a local chain:
+Event-driven synchronization.
+The indexer processes confirmed contract events and tracks the last indexed block.
 
-```shell
-npx hardhat ignition deploy ignition/modules/Counter.ts
-```
+Wallet-first interaction.
+The frontend uses Ethereum wallet interaction without requiring users to surrender private keys.
 
-To run the deployment to Sepolia, you need an account with funds to send the transaction. The provided Hardhat configuration includes a Configuration Variable called `SEPOLIA_PRIVATE_KEY`, which you can use to set the private key of the account you want to use.
+Security
 
-You can set the `SEPOLIA_PRIVATE_KEY` variable using the `hardhat-keystore` plugin or by setting it as an environment variable.
+Never commit:
 
-To set the `SEPOLIA_PRIVATE_KEY` config variable using `hardhat-keystore`:
+Private keys
+RPC credentials
+Database passwords
+Production environment files
 
-```shell
-npx hardhat keystore set SEPOLIA_PRIVATE_KEY
-```
+Use environment variables or the Hardhat keystore for deployment credentials.
 
-After setting the variable, you can run the deployment with the Sepolia network:
+Current scope
 
-```shell
-npx hardhat ignition deploy --network sepolia ignition/modules/Counter.ts
-```
+Endeavour currently focuses on a single environmental asset registry on Ethereum Sepolia, with carbon credits, biodiversity pools, and green-bond-oriented registry views.
+
+The architecture is modular enough to support additional chains, asset classes, verification systems, and environmental data sources.
+
+Roadmap
+
+Multi-chain registry support
+
+Stronger project verification workflows
+
+Environmental data integrations
+
+Institutional portfolio tooling
+
+Retirement certificates
+
+Cross-registry interoperability
+
+Expanded biodiversity asset models
+
+The question
+
+If environmental assets are going to become part of the global financial system, shouldn't their ownership and impact be as transparent as the assets themselves?
+
+That is the problem Endeavour is trying to solve.
+
+License
+
+MIT
