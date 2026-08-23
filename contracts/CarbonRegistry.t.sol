@@ -26,6 +26,10 @@ contract CarbonRegistryTest is Test {
     );
 
     function setUp() public {
+        // Warp to 2025-01-01 so vintageYear checks pass.
+        // Hardhat 3 EDR starts at block.timestamp = 0 (year 1970),
+        // which rejects any vintage year in the 2000s as "future".
+        vm.warp(1735689600);
         registry = new CarbonRegistry();
         vm.deal(alice, 1 ether);
         vm.deal(bob, 1 ether);

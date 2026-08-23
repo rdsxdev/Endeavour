@@ -45,7 +45,7 @@ def get_engine() -> Engine:
                 cursor.close()
 
         _SessionLocal = sessionmaker(
-            bind=_engine, autocommit=False, autoflush=False, expire_on_commit=False
+            bind=_engine, autocommit=False, autoflush=True, expire_on_commit=False
         )
     return _engine
 
