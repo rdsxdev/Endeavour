@@ -1,76 +1,47 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { usePageTitle } from "../hooks";
 import { POOLS, poolColor } from "../pools";
-import { formatCompact, retireCredit, transferCredit } from "../api";
+import { formatCompact, getCredits, retireCredit, transferCredit, type Credit } from "../api";
 import PageHeader from "../components/PageHeader";
 import Reveal from "../components/Reveal";
 import AreaChart from "../components/AreaChart";
 import Sparkline from "../components/Sparkline";
 
-const PORTFOLIO = [
-  {
-    id: "4920",
-    project: "Rimba Raya Biodiversity",
-    pool: "bio" as const,
-    volume: 25000,
-    status: "Active",
-    vintage: 2023,
-  },
-  {
-    id: "4921",
-    project: "Keo Seima Wildlife",
-    pool: "bio" as const,
-    volume: 10000,
-    status: "Active",
-    vintage: 2022,
-  },
-  {
-    id: "4810",
-    project: "Solar Farm Rajasthan",
-    pool: "carbon" as const,
-    volume: 5000,
-    status: "Retired",
-    vintage: 2021,
-  },
-  {
-    id: "4755",
-    project: "UK Green Gilt 2030",
-    pool: "bond" as const,
-    volume: 500000,
-    status: "Active",
-    vintage: 2024,
-  },
-];
+
 
 export default function ManageCredit() {
   usePageTitle("Portfolio");
-  const [portfolio, setPortfolio] = useState(PORTFOLIO);
-  const [busy, setBusy] = useState<string | null>(null);
+  const [portfolio, setPortfolio] = useState<Credit[]>([]);
+  const [busy, setBusy] = useState<number | null>(null);
 
   const [activeTab, setActiveTab] = useState<"holdings" | "history">(
     "holdings",
   );
 
-  const activeVolume = portfolio.filter((p) => p.status === "Active").reduce(
-    (s, p) => s + p.volume,
+  useEffect(() => {
+    getCredits()
+      .then((credits) => setPortfolio(credits))
+      .catch((err) => console.error("Failed to load portfolio:", err))
+;
+  }, [portfolio]);
+
+  const activeVolume = portfolio.filter((p) => !p.retired).reduce(
+    (s) => s + 1,
     0,
   );
-  const retiredVolume = portfolio.filter((p) => p.status === "Retired").reduce(
-    (s, p) => s + p.volume,
+  const retiredVolume = portfolio.filter((p) => p.retired).reduce(
+    (s) => s + 1,
     0,
   );
 
   const poolBreakdown = useMemo(() => {
-    const map = new Map<string, number>();
-    for (const p of PORTFOLIO.filter((a) => a.status === "Active")) {
-      map.set(p.pool, (map.get(p.pool) ?? 0) + p.volume);
-    }
-    return [...map.entries()];
-  }, []);
+    const active = portfolio.filter((p) => !p.retired).length
+    return [["carbon", active] as const]
+  }, [portfolio]);
 
   const filtered = portfolio.filter((p) =>
-    activeTab === "holdings" ? p.status === "Active" : p.status === "Retired",
+    activeTab === "holdings" ? !p.retired : p.retired,
   );
 
   return (
@@ -206,7 +177,7 @@ export default function ManageCredit() {
               </thead>
               <tbody className="divide-y divide-line">
                 {filtered.map((asset) => {
-                  const pool = POOLS.find((p) => p.kind === asset.pool);
+                  const pool = POOLS.find((p) => p.kind === "carbon") ?? POOLS[0];
                   return (
                     <tr key={asset.id} className="hover:bg-ink-2">
                       <td className="px-5 py-3.5 font-mono text-mute">
@@ -219,30 +190,30 @@ export default function ManageCredit() {
                         <span className="inline-flex items-center gap-2 font-mono text-xs">
                           <Sparkline
                             data={pool?.trend ?? []}
-                            color={poolColor(asset.pool)}
+                            color={poolColor("carbon")}
                             width={48}
                             height={20}
                           />
                           {pool?.symbol}
                         </span>
                       </td>
-                      <td className="px-5 py-3.5 font-mono">{asset.vintage}</td>
+                      <td className="px-5 py-3.5 font-mono">{asset.vintage_year}</td>
                       <td className="px-5 py-3.5 font-mono">
-                        {asset.volume.toLocaleString()}
+                        1
                       </td>
                       <td className="px-5 py-3.5">
                         <span
                           className={`text-xs font-medium uppercase tracking-wide ${
-                            asset.status === "Active"
+                            !asset.retired
                               ? "text-emerald-deep"
                               : "text-mute"
                           }`}
                         >
-                          {asset.status}
+                          {asset.retired ? "Retired" : "Active"}
                         </span>
                       </td>
                       <td className="px-5 py-3.5 text-right">
-                        {asset.status === "Active" ? (
+                        {!asset.retired ? (
                           <div className="flex justify-end gap-2">
                             <button
                               type="button"

@@ -199,20 +199,89 @@ export async function createCredit(
   }
 }
 
+interface EthereumProvider {
+  request(args: {
+    method: string
+    params?: unknown[]
+  }): Promise<unknown>
+}
+
+const CARBON_REGISTRY = "0x6c6Cd9cF0e0214d787350089C8f5B8b93144A447"
+const SEPOLIA_CHAIN_ID = "0xaa36a7"
+
+function encodeUint256(value: number): string {
+  return value.toString(16).padStart(64, "0")
+}
+
+function encodeAddress(address: string): string {
+  return address.slice(2).toLowerCase().padStart(64, "0")
+}
+
+async function getWallet(): Promise<{
+  provider: EthereumProvider
+  address: string
+}> {
+  if (!window.ethereum) {
+    throw new ApiError(400, "MetaMask is not installed.")
+  }
+
+  const accounts = (await window.ethereum.request({
+    method: "eth_requestAccounts",
+  })) as string[]
+
+  const address = accounts[0]
+
+  if (!address) {
+    throw new ApiError(400, "Please connect your wallet.")
+  }
+
+  const chainId = await window.ethereum.request({
+    method: "eth_chainId",
+  })
+
+  if (String(chainId).toLowerCase() !== SEPOLIA_CHAIN_ID) {
+    throw new ApiError(400, "Please switch MetaMask to Sepolia.")
+  }
+
+  return { provider: window.ethereum, address }
+}
+
+async function reportBlockchainTransaction(
+  txHash: string,
+  operationType: "transfer" | "retire",
+  creditId: number,
+  walletAddress: string,
+): Promise<void> {
+  await api.post("/transactions", {
+    operation_type: operationType,
+    credit_id: creditId,
+    wallet_address: walletAddress,
+    tx_hash: txHash,
+  })
+}
+
 export async function retireCredit(id: number): Promise<TxResponse> {
-  try {
-    const { data } = await api.post<TxResponse>(`/credits/${id}/retire`)
-    markLive()
-    return data
-  } catch (err) {
-    if (err instanceof ApiError && err.statusCode >= 400 && err.statusCode < 500) {
-      throw err
-    }
-    markOffline()
-    // Optimistic update so the UI reflects the change immediately
-    const local = SESSION_CREDITS.find((c) => c.id === id)
-    if (local) local.retired = true
-    return { status: "success", tx_hash: mockTxHash() }
+  const { provider, address } = await getWallet()
+
+  // retireCredit(uint256) selector = 0x0f2f9f7c
+  const data = "0xeb899eeb" + encodeUint256(id)
+
+  const txHash = (await provider.request({
+    method: "eth_sendTransaction",
+    params: [
+      {
+        from: address,
+        to: CARBON_REGISTRY,
+        data,
+      },
+    ],
+  })) as string
+
+  await reportBlockchainTransaction(txHash, "retire", id, address)
+
+  return {
+    status: "submitted",
+    tx_hash: txHash,
   }
 }
 
@@ -220,24 +289,34 @@ export async function transferCredit(
   id: number,
   newOwner: string,
 ): Promise<TxResponse> {
-  // Validate address format client-side before hitting the network
   if (!/^0x[a-fA-F0-9]{40}$/.test(newOwner)) {
     throw new ApiError(422, "Invalid Ethereum address format")
   }
-  try {
-    const { data } = await api.post<TxResponse>(`/credits/${id}/transfer`, {
-      new_owner: newOwner,
-    })
-    markLive()
-    return data
-  } catch (err) {
-    if (err instanceof ApiError && err.statusCode >= 400 && err.statusCode < 500) {
-      throw err
-    }
-    markOffline()
-    const local = SESSION_CREDITS.find((c) => c.id === id)
-    if (local) local.owner = newOwner
-    return { status: "success", tx_hash: mockTxHash() }
+
+  const { provider, address } = await getWallet()
+
+  // transferCredit(uint256,address) selector = 0x6f7f4e8b
+  const data =
+    "0x0df3a1e0" +
+    encodeUint256(id) +
+    encodeAddress(newOwner)
+
+  const txHash = (await provider.request({
+    method: "eth_sendTransaction",
+    params: [
+      {
+        from: address,
+        to: CARBON_REGISTRY,
+        data,
+      },
+    ],
+  })) as string
+
+  await reportBlockchainTransaction(txHash, "transfer", id, address)
+
+  return {
+    status: "submitted",
+    tx_hash: txHash,
   }
 }
 
