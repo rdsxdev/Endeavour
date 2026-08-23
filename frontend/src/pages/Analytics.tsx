@@ -15,7 +15,6 @@ import { Panel, Metric } from "../components/ui";
 import Reveal from "../components/Reveal";
 import AreaChart from "../components/AreaChart";
 import Sparkline from "../components/Sparkline";
-import satellite from "../assets/satellite.jpg";
 
 export default function Analytics() {
   usePageTitle("Analytics");

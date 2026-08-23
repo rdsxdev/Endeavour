@@ -16,7 +16,6 @@ import CreditCard from "../components/CreditCard";
 import PageHeader from "../components/PageHeader";
 import Reveal from "../components/Reveal";
 import { StatusPill } from "../components/ui";
-import heroForest from "../assets/hero-forest.jpg";
 
 type StatusFilter = "All" | "Verified" | "Retired" | "Pending";
 type SortKey = "newest" | "oldest" | "vintage" | "volume";

@@ -7,7 +7,6 @@ import PageHeader from "../components/PageHeader";
 import Reveal from "../components/Reveal";
 import AreaChart from "../components/AreaChart";
 import Sparkline from "../components/Sparkline";
-import heroRenewable from "../assets/hero-renewable.jpg";
 
 const PORTFOLIO = [
   {
